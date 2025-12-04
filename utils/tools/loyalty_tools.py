@@ -1,367 +1,213 @@
 """
-Loyalty and Offers Agent Tools
-Applies loyalty points, coupon codes, and personalized offers
+Loyalty Agent Tools - PostgreSQL Only
+Handles loyalty points, tiers, discounts, and offers
 """
-import sqlite3
 import json
-import random
 from datetime import datetime
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from config.config import DB_PATH, LOYALTY_TIERS
+from utils.db import get_db, get_customer, update_customer_points, update_customer_tier, get_promotions, create_customer, generate_customer_id
+
+# Tier benefits configuration
+TIER_BENEFITS = {
+    "bronze": {"discount": 0, "free_shipping_min": 100, "points_multiplier": 1},
+    "silver": {"discount": 5, "free_shipping_min": 75, "points_multiplier": 1.25},
+    "gold": {"discount": 10, "free_shipping_min": 50, "points_multiplier": 1.5},
+    "platinum": {"discount": 20, "free_shipping_min": 0, "points_multiplier": 2}
+}
 
 def get_loyalty_status(customer_id: str):
     """
-    Get customer's loyalty tier and points balance.
+    Get customer's loyalty tier, points, and benefits.
     
     Args:
         customer_id: Customer identifier
     
     Returns:
-        Dictionary with loyalty information
-        Success: {
-            "status": "success",
-            "customer_id": "CUST1001",
-            "customer_name": "John Doe",
-            "loyalty_tier": "gold",
-            "points_balance": 1850,
-            "points_to_next_tier": 150,
-            "next_tier": "platinum",
-            "tier_benefits": {
-                "discount": "15%",
-                "free_shipping": true,
-                "early_access": true
-            }
-        }
-        Error: {"status": "error", "message": "Customer not found"}
+        Dictionary with loyalty status and benefits
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT name, loyalty_tier, loyalty_points
-        FROM customers WHERE customer_id = ?
-    """, (customer_id,))
-    
-    customer = cursor.fetchone()
-    conn.close()
-    
+    customer = get_customer(customer_id)
     if not customer:
         return {"status": "error", "message": f"Customer {customer_id} not found"}
     
-    name, tier, points = customer
+    tier = customer["loyalty_tier"].lower()
+    points = customer["loyalty_points"]
+    benefits = TIER_BENEFITS.get(tier, TIER_BENEFITS["bronze"])
     
-    # Calculate next tier
+    # Calculate points to next tier
+    tier_thresholds = {"bronze": 500, "silver": 1500, "gold": 3000, "platinum": float('inf')}
     tier_order = ["bronze", "silver", "gold", "platinum"]
-    current_tier_index = tier_order.index(tier)
-    next_tier = tier_order[current_tier_index + 1] if current_tier_index < len(tier_order) - 1 else None
+    current_idx = tier_order.index(tier)
     
+    next_tier = None
     points_to_next = 0
-    if next_tier:
-        points_to_next = LOYALTY_TIERS[next_tier]["min_points"] - points
-    
-    tier_benefits = {
-        "discount": f"{int(LOYALTY_TIERS[tier]['discount'] * 100)}%",
-        "free_shipping": tier in ["gold", "platinum"],
-        "early_access": tier in ["platinum"],
-        "birthday_bonus": tier in ["silver", "gold", "platinum"],
-        "exclusive_events": tier == "platinum"
-    }
+    if current_idx < len(tier_order) - 1:
+        next_tier = tier_order[current_idx + 1]
+        points_to_next = tier_thresholds[tier] - points
+        if points_to_next < 0:
+            points_to_next = 0
     
     return {
         "status": "success",
         "customer_id": customer_id,
-        "customer_name": name,
-        "loyalty_tier": tier,
-        "points_balance": points,
-        "points_to_next_tier": max(0, points_to_next),
-        "next_tier": next_tier,
-        "tier_benefits": tier_benefits,
-        "tier_discount": LOYALTY_TIERS[tier]["discount"]
+        "customer_name": customer["name"],
+        "loyalty_tier": customer["loyalty_tier"],
+        "loyalty_points": points,
+        "tier_discount": benefits["discount"],
+        "free_shipping_minimum": benefits["free_shipping_min"],
+        "points_multiplier": benefits["points_multiplier"],
+        "next_tier": next_tier.capitalize() if next_tier else None,
+        "points_to_next_tier": points_to_next,
+        "benefits_summary": f"{benefits['discount']}% discount, free shipping on orders ${benefits['free_shipping_min']}+"
     }
 
-def apply_loyalty_discount(customer_id: str, order_total: float):
+def apply_promotion(promo_code: str, order_total: float, customer_id: str = None):
     """
-    Apply loyalty tier discount to order total.
-    
-    Args:
-        customer_id: Customer identifier
-        order_total: Original order total
-    
-    Returns:
-        Dictionary with discount applied
-        Success: {
-            "status": "success",
-            "original_total": 129.99,
-            "discount_percentage": 15,
-            "discount_amount": 19.50,
-            "final_total": 110.49,
-            "points_earned": 110
-        }
+    Validate and apply a promotion code.
     """
-    loyalty_info = get_loyalty_status(customer_id)
-    
-    if loyalty_info["status"] == "error":
-        return loyalty_info
-    
-    discount_rate = loyalty_info["tier_discount"]
-    discount_amount = order_total * discount_rate
-    final_total = order_total - discount_amount
-    
-    # Earn 1 point per dollar spent (after discount)
-    points_earned = int(final_total)
-    
-    return {
-        "status": "success",
-        "customer_id": customer_id,
-        "loyalty_tier": loyalty_info["loyalty_tier"],
-        "original_total": round(order_total, 2),
-        "discount_percentage": int(discount_rate * 100),
-        "discount_amount": round(discount_amount, 2),
-        "final_total": round(final_total, 2),
-        "points_earned": points_earned,
-        "message": f"Your {loyalty_info['loyalty_tier'].title()} tier discount of {int(discount_rate * 100)}% has been applied!"
-    }
-
-def apply_promo_code(promo_code: str, order_total: float, order_items: list = None):
-    """
-    Apply a promotional code to an order.
-    
-    Args:
-        promo_code: Promotion code to apply
-        order_total: Order total before discount
-        order_items: List of items in order (for category-specific promos)
-    
-    Returns:
-        Dictionary with promo code application result
-        Success: {
-            "status": "success",
-            "promo_code": "SAVE20",
-            "discount_type": "fixed",
-            "discount_amount": 20.00,
-            "new_total": 109.99
-        }
-        Error: {"status": "error", "message": "Invalid or expired promo code"}
-    """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT promo_code, description, discount_type, discount_value, min_purchase, 
-               valid_until, usage_limit, times_used
-        FROM promotions
-        WHERE promo_code = ? AND datetime(valid_until) > datetime('now')
-    """, (promo_code.upper(),))
-    
-    promo = cursor.fetchone()
+    promotions = get_promotions()
+    promo = None
+    for p in promotions:
+        if p["code"].upper() == promo_code.upper():
+            promo = p
+            break
     
     if not promo:
-        conn.close()
+        return {"status": "error", "message": f"Invalid promo code: {promo_code}"}
+    
+    if order_total < promo["min_order"]:
         return {
             "status": "error",
-            "message": f"Promo code '{promo_code}' is invalid or expired"
+            "message": f"Minimum order of ${promo['min_order']} required for {promo_code}"
         }
     
-    code, description, discount_type, discount_value, min_purchase, valid_until, usage_limit, times_used = promo
-    
-    # Check usage limit
-    if usage_limit != -1 and times_used >= usage_limit:
-        conn.close()
-        return {
-            "status": "error",
-            "message": f"Promo code '{promo_code}' has reached its usage limit"
-        }
-    
-    # Check minimum purchase
-    if order_total < min_purchase:
-        conn.close()
-        return {
-            "status": "error",
-            "message": f"Order total must be at least ${min_purchase:.2f} to use this promo code"
-        }
-    
-    # Calculate discount
-    discount_amount = 0
-    new_total = order_total
-    
-    if discount_type == "percentage":
-        discount_amount = order_total * (discount_value / 100)
-        new_total = order_total - discount_amount
-    elif discount_type == "fixed":
-        discount_amount = min(discount_value, order_total)
-        new_total = order_total - discount_amount
-    elif discount_type == "shipping":
-        discount_amount = 0  # Handled separately in shipping calculation
-        new_total = order_total
-    
-    # Update usage count
-    cursor.execute("""
-        UPDATE promotions SET times_used = times_used + 1
-        WHERE promo_code = ?
-    """, (promo_code.upper(),))
-    
-    conn.commit()
-    conn.close()
+    discount_amount = round(order_total * (promo["discount_percent"] / 100), 2)
+    new_total = round(order_total - discount_amount, 2)
     
     return {
         "status": "success",
-        "promo_code": code,
-        "description": description,
-        "discount_type": discount_type,
-        "discount_value": discount_value,
-        "discount_amount": round(discount_amount, 2),
-        "original_total": round(order_total, 2),
-        "new_total": round(new_total, 2),
-        "message": f"Promo code '{code}' applied successfully! {description}"
+        "promo_code": promo_code,
+        "description": promo["description"],
+        "original_total": order_total,
+        "discount_percent": promo["discount_percent"],
+        "discount_amount": discount_amount,
+        "new_total": new_total,
+        "message": f"Promo {promo_code} applied! You saved ${discount_amount}"
     }
 
-def calculate_final_pricing(customer_id: str, order_total: float, promo_code: str = None, items: list = None):
+def calculate_final_price(customer_id: str, base_price: float, promo_code: str = None):
     """
-    Calculate final pricing with all discounts and loyalty benefits.
-    
-    Args:
-        customer_id: Customer identifier
-        order_total: Base order total
-        promo_code: Optional promo code
-        items: List of order items
-    
-    Returns:
-        Dictionary with complete pricing breakdown
-        Success: {
-            "status": "success",
-            "subtotal": 129.99,
-            "loyalty_discount": 19.50,
-            "promo_discount": 20.00,
-            "tax": 9.05,
-            "shipping": 0,
-            "total": 99.54,
-            "total_savings": 39.50
-        }
+    Calculate final price with loyalty discount and optional promo code.
     """
-    pricing = {
-        "subtotal": round(order_total, 2),
-        "loyalty_discount": 0,
-        "promo_discount": 0,
-        "tax": 0,
-        "shipping": 5.99,
-        "total": 0,
-        "total_savings": 0
-    }
-    
-    current_total = order_total
-    
-    # Apply loyalty discount
-    loyalty_result = apply_loyalty_discount(customer_id, current_total)
-    if loyalty_result["status"] == "success":
-        pricing["loyalty_discount"] = loyalty_result["discount_amount"]
-        current_total = loyalty_result["final_total"]
-        pricing["points_earned"] = loyalty_result["points_earned"]
-        
-        # Free shipping for gold/platinum
-        if loyalty_result["loyalty_tier"] in ["gold", "platinum"]:
-            pricing["shipping"] = 0
-    
-    # Apply promo code
-    if promo_code:
-        promo_result = apply_promo_code(promo_code, current_total, items)
-        if promo_result["status"] == "success":
-            pricing["promo_discount"] = promo_result["discount_amount"]
-            current_total = promo_result["new_total"]
-            
-            # Handle free shipping promos
-            if promo_result["discount_type"] == "shipping":
-                pricing["shipping"] = 0
-    
-    # Calculate tax (8% for example)
-    pricing["tax"] = round(current_total * 0.08, 2)
-    
-    # Calculate final total
-    pricing["total"] = round(current_total + pricing["tax"] + pricing["shipping"], 2)
-    pricing["total_savings"] = round(pricing["loyalty_discount"] + pricing["promo_discount"], 2)
-    
-    return {
-        "status": "success",
-        **pricing,
-        "message": f"Total savings: ${pricing['total_savings']:.2f}"
-    }
-
-def check_personalized_offers(customer_id: str):
-    """
-    Get personalized offers for a customer based on their profile.
-    
-    Args:
-        customer_id: Customer identifier
-    
-    Returns:
-        Dictionary with personalized offers
-        Success: {
-            "status": "success",
-            "offers": [
-                {
-                    "title": "Birthday Bonus",
-                    "description": "500 bonus points",
-                    "type": "points",
-                    "expires": "2025-12-31"
-                }
-            ]
-        }
-    """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT loyalty_tier, preferences
-        FROM customers WHERE customer_id = ?
-    """, (customer_id,))
-    
-    customer = cursor.fetchone()
-    conn.close()
-    
+    customer = get_customer(customer_id)
     if not customer:
-        return {"status": "error", "message": "Customer not found"}
+        return {"status": "error", "message": f"Customer {customer_id} not found"}
     
-    tier, preferences_json = customer
-    preferences = json.loads(preferences_json)
+    tier = customer["loyalty_tier"].lower()
+    benefits = TIER_BENEFITS.get(tier, TIER_BENEFITS["bronze"])
     
-    offers = []
+    # Apply tier discount
+    tier_discount = round(base_price * (benefits["discount"] / 100), 2)
+    price_after_tier = round(base_price - tier_discount, 2)
     
-    # Tier-based offers
-    if tier in ["silver", "gold", "platinum"]:
-        offers.append({
-            "title": "Birthday Bonus",
-            "description": "Earn 500 bonus points on your birthday",
-            "type": "points",
-            "value": 500,
-            "expires": "On your birthday"
-        })
+    # Apply promo code if provided
+    promo_discount = 0
+    promo_info = None
+    if promo_code:
+        promo_result = apply_promotion(promo_code, price_after_tier, customer_id)
+        if promo_result["status"] == "success":
+            promo_discount = promo_result["discount_amount"]
+            price_after_tier = promo_result["new_total"]
+            promo_info = promo_result
     
-    if tier == "platinum":
-        offers.append({
-            "title": "VIP Early Access",
-            "description": "24-hour early access to new product launches",
-            "type": "exclusive_access",
-            "value": "N/A"
-        })
+    # Determine shipping
+    shipping_cost = 0 if price_after_tier >= benefits["free_shipping_min"] or benefits["free_shipping_min"] == 0 else 5.99
     
-    # Category-based offers
-    favorite_categories = preferences.get("favorite_categories", [])
-    if "Electronics" in favorite_categories:
-        offers.append({
-            "title": "Tech Lover Discount",
-            "description": "Extra 10% off all electronics",
-            "type": "discount",
-            "value": 10,
-            "category": "Electronics",
-            "expires": (datetime.now().replace(day=1, month=datetime.now().month % 12 + 1)).strftime("%Y-%m-%d")
-        })
+    final_price = round(price_after_tier + shipping_cost, 2)
+    
+    # Calculate points earned
+    points_earned = int(base_price * benefits["points_multiplier"])
     
     return {
         "status": "success",
         "customer_id": customer_id,
-        "offers": offers,
-        "count": len(offers)
+        "customer_name": customer["name"],
+        "loyalty_tier": customer["loyalty_tier"],
+        "base_price": base_price,
+        "tier_discount": tier_discount,
+        "tier_discount_percent": benefits["discount"],
+        "promo_discount": promo_discount,
+        "shipping_cost": shipping_cost,
+        "final_price": final_price,
+        "points_earned": points_earned,
+        "savings_total": round(tier_discount + promo_discount, 2),
+        "promo_applied": promo_info
     }
 
-print("✅ Loyalty and offers tools loaded")
+def register_new_customer(name: str, email: str, phone: str = "", location: str = ""):
+    """
+    Register a new customer in the database.
+    
+    Args:
+        name: Customer's full name
+        email: Customer's email address
+        phone: Customer's phone number (optional)
+        location: Customer's location (optional)
+    
+    Returns:
+        Dictionary with new customer details
+    """
+    customer_id = generate_customer_id()
+    result = create_customer(customer_id, name, email, phone, location, "Bronze", 100)
+    
+    if result["status"] == "success":
+        return {
+            "status": "success",
+            "customer_id": customer_id,
+            "name": name,
+            "email": email,
+            "loyalty_tier": "Bronze",
+            "loyalty_points": 100,
+            "message": f"Welcome {name}! Your customer ID is {customer_id}. You start with Bronze tier and 100 bonus points!"
+        }
+    return result
+
+def add_loyalty_points(customer_id: str, points: int, reason: str = "Purchase"):
+    """
+    Add loyalty points to a customer's account.
+    """
+    customer = get_customer(customer_id)
+    if not customer:
+        return {"status": "error", "message": f"Customer {customer_id} not found"}
+    
+    update_customer_points(customer_id, points)
+    
+    new_points = customer["loyalty_points"] + points
+    
+    # Check for tier upgrade
+    tier_thresholds = {"Bronze": 0, "Silver": 500, "Gold": 1500, "Platinum": 3000}
+    current_tier = customer["loyalty_tier"]
+    new_tier = current_tier
+    
+    for tier, threshold in sorted(tier_thresholds.items(), key=lambda x: x[1], reverse=True):
+        if new_points >= threshold:
+            new_tier = tier
+            break
+    
+    if new_tier != current_tier:
+        update_customer_tier(customer_id, new_tier)
+    
+    return {
+        "status": "success",
+        "customer_id": customer_id,
+        "points_added": points,
+        "reason": reason,
+        "new_total": new_points,
+        "tier_upgraded": new_tier != current_tier,
+        "new_tier": new_tier if new_tier != current_tier else None,
+        "message": f"Added {points} points for {reason}. New balance: {new_points}"
+    }
+
+print("✅ Loyalty and offers tools loaded (PostgreSQL)")

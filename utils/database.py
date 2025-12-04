@@ -1,8 +1,11 @@
 """
 Database initialization and management for Retail Sales Agent System
 Creates and populates synthetic data for testing
+Supports both SQLite (local) and PostgreSQL (Neon Cloud)
 """
 import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import json
 import random
 from datetime import datetime, timedelta
@@ -11,11 +14,24 @@ import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from config.config import DB_PATH, STORE_LOCATIONS, LOYALTY_TIERS
+from config.config import DB_PATH, DATABASE_URL, USE_POSTGRESQL, STORE_LOCATIONS, LOYALTY_TIERS
 
 def get_connection():
-    """Get database connection"""
-    return sqlite3.connect(DB_PATH)
+    """Get database connection based on configuration"""
+    if USE_POSTGRESQL and DATABASE_URL:
+        try:
+            conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+            return conn, True  # Return connection and postgres flag
+        except Exception as e:
+            print(f"⚠️  PostgreSQL connection failed: {e}")
+            print("   Falling back to SQLite...")
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            return conn, False
+    else:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn, False
 
 def create_database():
     """Create all necessary database tables"""

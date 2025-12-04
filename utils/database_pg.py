@@ -25,7 +25,7 @@ class PostgreSQLDB:
         For free cloud PostgreSQL (ElephantSQL, Supabase, etc.):
             Use the connection string from your provider
         """
-        self.connection_string = connection_string or os.getenv('POSTGRESQL_URL')
+        self.connection_string = connection_string or os.getenv('DATABASE_URL') or os.getenv('POSTGRESQL_URL')
         
         if not self.connection_string:
             # Default to local PostgreSQL

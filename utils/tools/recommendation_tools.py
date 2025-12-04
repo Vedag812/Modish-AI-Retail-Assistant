@@ -1,8 +1,8 @@
 """
 Recommendation Agent Tools
 Analyzes customer profile, browsing history, and seasonal trends to suggest products
+Uses PostgreSQL (Neon Cloud) ONLY
 """
-import sqlite3
 import json
 import random
 from datetime import datetime
@@ -10,7 +10,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from config.config import DB_PATH
+from utils.db import get_db, execute_query, get_customer, search_products, get_promotions
 
 def get_personalized_recommendations(customer_id: str, max_recommendations: int = 5):
     """
@@ -22,60 +22,38 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
     
     Returns:
         Dictionary with status and recommendations
-        Success: {
-            "status": "success",
-            "customer_name": "John Doe",
-            "recommendations": [
-                {
-                    "sku": "SKU1001",
-                    "name": "Wireless Bluetooth Headphones",
-                    "category": "Electronics",
-                    "price": 129.99,
-                    "rating": 4.5,
-                    "reason": "Based on your browsing history"
-                },
-                ...
-            ]
-        }
-        Error: {"status": "error", "message": "Customer not found"}
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Get customer profile
-    cursor.execute("""
-        SELECT name, browsing_history, purchase_history, preferences
-        FROM customers WHERE customer_id = ?
-    """, (customer_id,))
-    
-    customer = cursor.fetchone()
+    customer = get_customer(customer_id)
     if not customer:
-        conn.close()
         return {"status": "error", "message": f"Customer {customer_id} not found"}
     
-    name, browsing_json, purchase_json, preferences_json = customer
-    browsing_history = json.loads(browsing_json)
-    purchase_history = json.loads(purchase_json)
-    preferences = json.loads(preferences_json)
+    name = customer["name"]
+    browsing_history = customer.get("browsing_history", [])
+    purchase_history = customer.get("purchase_history", [])
+    preferences = customer.get("preferences", {})
     
-    # Get previously viewed/purchased SKUs
-    viewed_skus = browsing_history[-10:] if browsing_history else []
-    purchased_skus = [item['sku'] for item in purchase_history]
+    # Get previously purchased SKUs
+    purchased_skus = [item.get('sku', '') for item in purchase_history] if purchase_history else []
     
     # Get products from favorite categories
     favorite_categories = preferences.get('favorite_categories', [])
     
     recommendations = []
     
+    conn = get_db()
+    cursor = conn.cursor()
+    
     # Recommend from favorite categories
     if favorite_categories:
-        placeholders = ','.join('?' * len(favorite_categories))
+        placeholders = ','.join(['%s'] * len(favorite_categories))
+        exclude_placeholders = ','.join(['%s'] * len(purchased_skus)) if purchased_skus else '%s'
+        
         cursor.execute(f"""
             SELECT sku, name, category, current_price, rating, reviews_count
             FROM products
-            WHERE category IN ({placeholders}) AND sku NOT IN ({','.join('?' * len(purchased_skus)) if purchased_skus else '?'})
+            WHERE category IN ({placeholders}) AND sku NOT IN ({exclude_placeholders})
             ORDER BY rating DESC, reviews_count DESC
-            LIMIT ?
+            LIMIT %s
         """, (*favorite_categories, *(purchased_skus if purchased_skus else ['']), max_recommendations))
         
         for row in cursor.fetchall():
@@ -83,8 +61,8 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
                 "sku": row[0],
                 "name": row[1],
                 "category": row[2],
-                "price": row[3],
-                "rating": row[4],
+                "price": float(row[3]),
+                "rating": float(row[4]) if row[4] else 0,
                 "reason": f"Recommended based on your interest in {row[2]}"
             })
     
@@ -92,10 +70,10 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
     if len(recommendations) < max_recommendations:
         excluded_skus = [r['sku'] for r in recommendations] + purchased_skus
         if excluded_skus:
-            placeholders = ','.join('?' * len(excluded_skus))
+            placeholders = ','.join(['%s'] * len(excluded_skus))
             params = tuple(excluded_skus) + (max_recommendations - len(recommendations),)
         else:
-            placeholders = '?'
+            placeholders = '%s'
             params = ('', max_recommendations - len(recommendations))
         
         cursor.execute(f"""
@@ -103,7 +81,7 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
             FROM products
             WHERE sku NOT IN ({placeholders})
             ORDER BY rating DESC, reviews_count DESC
-            LIMIT ?
+            LIMIT %s
         """, params)
         
         for row in cursor.fetchall():
@@ -111,8 +89,8 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
                 "sku": row[0],
                 "name": row[1],
                 "category": row[2],
-                "price": row[3],
-                "rating": row[4],
+                "price": float(row[3]),
+                "rating": float(row[4]) if row[4] else 0,
                 "reason": "Trending item with high ratings"
             })
     
@@ -127,30 +105,14 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
 def suggest_bundle_deals(sku: str):
     """
     Suggest complementary products that go well together as a bundle.
-    
-    Args:
-        sku: The product SKU to find complementary items for
-    
-    Returns:
-        Dictionary with bundle suggestions
-        Success: {
-            "status": "success",
-            "main_product": {"sku": "SKU1001", "name": "...", "price": 129.99},
-            "bundle_items": [
-                {"sku": "SKU1005", "name": "...", "price": 24.99, "discount": "10%"},
-                ...
-            ],
-            "bundle_savings": 25.00
-        }
-        Error: {"status": "error", "message": "Product not found"}
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_db()
     cursor = conn.cursor()
     
     # Get main product
     cursor.execute("""
         SELECT sku, name, category, current_price
-        FROM products WHERE sku = ?
+        FROM products WHERE sku = %s
     """, (sku,))
     
     main_product = cursor.fetchone()
@@ -160,11 +122,11 @@ def suggest_bundle_deals(sku: str):
     
     main_sku, main_name, main_category, main_price = main_product
     
-    # Get complementary products from same or related categories
+    # Get complementary products from same category
     cursor.execute("""
         SELECT sku, name, current_price
         FROM products
-        WHERE category = ? AND sku != ?
+        WHERE category = %s AND sku != %s
         ORDER BY rating DESC
         LIMIT 3
     """, (main_category, sku))
@@ -173,12 +135,12 @@ def suggest_bundle_deals(sku: str):
     total_discount = 0
     
     for row in cursor.fetchall():
-        discount_amount = round(row[2] * 0.10, 2)  # 10% bundle discount
+        discount_amount = round(float(row[2]) * 0.10, 2)
         bundle_items.append({
             "sku": row[0],
             "name": row[1],
-            "original_price": row[2],
-            "bundle_price": round(row[2] - discount_amount, 2),
+            "original_price": float(row[2]),
+            "bundle_price": round(float(row[2]) - discount_amount, 2),
             "discount": "10%"
         })
         total_discount += discount_amount
@@ -190,7 +152,7 @@ def suggest_bundle_deals(sku: str):
         "main_product": {
             "sku": main_sku,
             "name": main_name,
-            "price": main_price
+            "price": float(main_price)
         },
         "bundle_items": bundle_items,
         "bundle_savings": round(total_discount, 2),
@@ -200,53 +162,24 @@ def suggest_bundle_deals(sku: str):
 def get_seasonal_promotions(category: str = None):
     """
     Get current seasonal promotions and deals.
-    
-    Args:
-        category: Optional product category to filter promotions
-    
-    Returns:
-        Dictionary with active promotions
-        Success: {
-            "status": "success",
-            "promotions": [
-                {
-                    "code": "WELCOME10",
-                    "description": "10% off for new customers",
-                    "discount_type": "percentage",
-                    "discount_value": 10,
-                    "valid_until": "2025-01-02"
-                },
-                ...
-            ]
-        }
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT promo_code, description, discount_type, discount_value, min_purchase, valid_until
-        FROM promotions
-        WHERE datetime(valid_until) > datetime('now')
-        AND (usage_limit = -1 OR times_used < usage_limit)
-    """)
-    
-    promotions = []
-    for row in cursor.fetchall():
-        promotions.append({
-            "code": row[0],
-            "description": row[1],
-            "discount_type": row[2],
-            "discount_value": row[3],
-            "min_purchase": row[4],
-            "valid_until": row[5].split('T')[0]
-        })
-    
-    conn.close()
-    
+    promotions = get_promotions()
     return {
         "status": "success",
         "promotions": promotions,
         "count": len(promotions)
     }
 
-print("✅ Recommendation tools loaded")
+def search_products_tool(query: str = "", category: str = "", max_price: float = None, min_price: float = None, max_results: int = 10):
+    """Search for products by name, category, and price range."""
+    results = search_products(query=query, category=category, min_price=min_price, max_price=max_price, limit=max_results)
+    
+    return {
+        "status": "success",
+        "results": results,
+        "count": len(results),
+        "query": query,
+        "filters": {"category": category, "max_price": max_price, "min_price": min_price}
+    }
+
+print("✅ Recommendation tools loaded (PostgreSQL)")

@@ -1,18 +1,17 @@
 """
-Inventory Agent Tools
-Checks real-time stock across warehouses and stores
-Now with REAL API integration!
+Inventory Agent Tools - PostgreSQL Only
+Real-time stock checking and fulfillment options
 """
-import sqlite3
 import json
-from datetime import datetime
+import random
+from datetime import datetime, timedelta
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from config.config import DB_PATH, STORE_LOCATIONS
+from utils.db import get_db, get_product, get_inventory
 
-# Import real inventory API
+# Import real inventory API if available
 try:
     from utils.external_apis.inventory_api import inventory_api
     USE_REAL_INVENTORY_API = True
@@ -21,256 +20,139 @@ except:
     USE_REAL_INVENTORY_API = False
     print("⚠️  Inventory API not available, using database")
 
-def check_inventory(sku: str, location: str = "all"):
+def check_inventory(sku: str, location: str = None):
     """
-    Check real-time inventory for a product across locations.
+    Check inventory levels for a product across locations.
     
     Args:
-        sku: Product SKU to check (e.g., "SKU1001")
-        location: Specific location or "all" for all locations
+        sku: Product SKU to check
+        location: Optional specific location to check
     
     Returns:
-        Dictionary with inventory information
-        Success: {
-            "status": "success",
-            "sku": "SKU1001",
-            "product_name": "Wireless Bluetooth Headphones",
-            "inventory": [
-                {
-                    "location": "Online Warehouse",
-                    "available": 450,
-                    "reserved": 12,
-                    "status": "in_stock"
-                },
-                ...
-            ],
-            "total_available": 520
-        }
-        Error: {"status": "error", "message": "Product not found"}
+        Dictionary with inventory status
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Get product info
-    cursor.execute("SELECT name FROM products WHERE sku = ?", (sku,))
-    product = cursor.fetchone()
-    
+    product = get_product(sku)
     if not product:
-        conn.close()
         return {"status": "error", "message": f"Product {sku} not found"}
     
-    product_name = product[0]
+    inventory = get_inventory(sku, location)
     
-    # Get inventory
-    if location.lower() == "all":
-        cursor.execute("""
-            SELECT location, stock_quantity, reserved_quantity, last_updated
-            FROM inventory WHERE sku = ?
-        """, (sku,))
-    else:
-        cursor.execute("""
-            SELECT location, stock_quantity, reserved_quantity, last_updated
-            FROM inventory WHERE sku = ? AND location = ?
-        """, (sku, location))
+    if not inventory:
+        return {
+            "status": "success",
+            "sku": sku,
+            "product_name": product["name"],
+            "inventory": [],
+            "message": "Product not available at any location"
+        }
     
-    inventory_data = []
-    total_available = 0
-    
-    for row in cursor.fetchall():
-        available = row[1] - row[2]
-        total_available += available
-        
-        status = "in_stock" if available > 10 else "low_stock" if available > 0 else "out_of_stock"
-        
-        inventory_data.append({
-            "location": row[0],
-            "available": available,
-            "reserved": row[2],
-            "status": status,
-            "last_updated": row[3]
-        })
-    
-    conn.close()
+    total_stock = sum(item["quantity"] for item in inventory)
     
     return {
         "status": "success",
         "sku": sku,
-        "product_name": product_name,
-        "inventory": inventory_data,
-        "total_available": total_available
+        "product_name": product["name"],
+        "total_stock": total_stock,
+        "inventory": inventory,
+        "in_stock": total_stock > 0
     }
 
-def get_fulfillment_options(sku: str, quantity: int, customer_location: str = None):
+def get_fulfillment_options(sku: str, customer_location: str = ""):
     """
-    Get available fulfillment options (shipping, click & collect, in-store).
+    Get available fulfillment options for a product.
     
     Args:
         sku: Product SKU
-        quantity: Desired quantity
-        customer_location: Customer's preferred store location (optional)
+        customer_location: Customer's location for shipping estimates
     
     Returns:
         Dictionary with fulfillment options
-        Success: {
-            "status": "success",
-            "sku": "SKU1001",
-            "quantity": 2,
-            "options": [
-                {
-                    "type": "ship_to_home",
-                    "available": true,
-                    "estimated_days": "3-5",
-                    "cost": 5.99
-                },
-                {
-                    "type": "click_and_collect",
-                    "available": true,
-                    "location": "New York - 5th Avenue",
-                    "ready_in": "2 hours",
-                    "cost": 0
-                },
-                {
-                    "type": "in_store_pickup",
-                    "available": true,
-                    "location": "New York - 5th Avenue",
-                    "cost": 0
-                }
-            ]
-        }
-        Error: {"status": "error", "message": "..."}
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Check if product exists
-    cursor.execute("SELECT name FROM products WHERE sku = ?", (sku,))
-    if not cursor.fetchone():
-        conn.close()
+    product = get_product(sku)
+    if not product:
         return {"status": "error", "message": f"Product {sku} not found"}
     
-    # Check online warehouse stock
-    cursor.execute("""
-        SELECT stock_quantity, reserved_quantity
-        FROM inventory WHERE sku = ? AND location = 'Online Warehouse'
-    """, (sku,))
+    inventory = get_inventory(sku)
+    available_locations = [item for item in inventory if item["quantity"] > 0]
     
-    online_stock = cursor.fetchone()
-    ship_available = online_stock and (online_stock[0] - online_stock[1]) >= quantity
+    fulfillment_options = []
     
-    options = []
-    
-    # Ship to home option
-    options.append({
-        "type": "ship_to_home",
-        "available": ship_available,
-        "estimated_days": "3-5 business days",
-        "cost": 5.99 if quantity < 3 else 0,  # Free shipping for 3+ items
-        "note": "Free shipping on orders of 3+ items"
+    # Standard shipping (free above ₹500)
+    fulfillment_options.append({
+        "type": "standard_shipping",
+        "name": "Standard Shipping",
+        "cost": 49 if product["price"] < 500 else 0,
+        "cost_display": "₹49" if product["price"] < 500 else "FREE",
+        "estimated_days": "5-7 business days",
+        "available": len(available_locations) > 0
     })
     
-    # Click & collect / in-store options
-    locations_query = """
-        SELECT location, stock_quantity, reserved_quantity
-        FROM inventory WHERE sku = ? AND location != 'Online Warehouse'
-    """
+    # Express shipping
+    fulfillment_options.append({
+        "type": "express_shipping",
+        "name": "Express Shipping",
+        "cost": 99,
+        "cost_display": "₹99",
+        "estimated_days": "2-3 business days",
+        "available": len(available_locations) > 0
+    })
     
-    cursor.execute(locations_query, (sku,))
+    # Same day delivery
+    fulfillment_options.append({
+        "type": "same_day",
+        "name": "Same Day Delivery",
+        "cost": 149,
+        "cost_display": "₹149",
+        "estimated_days": "Today (order before 2 PM)",
+        "available": len(available_locations) > 0
+    })
     
-    for row in cursor.fetchall():
-        available_stock = row[1] - row[2]
-        if available_stock >= quantity:
-            # Click and collect (order online, pick up in store)
-            options.append({
-                "type": "click_and_collect",
-                "available": True,
-                "location": row[0],
-                "ready_in": "2 hours",
-                "cost": 0
-            })
-            
-            # In-store availability
-            if customer_location and customer_location == row[0]:
-                options.append({
-                    "type": "in_store_availability",
-                    "available": True,
-                    "location": row[0],
-                    "stock": available_stock,
-                    "note": "Available for immediate purchase in-store"
-                })
-    
-    conn.close()
+    # Store pickup
+    for loc in available_locations[:3]:
+        fulfillment_options.append({
+            "type": "store_pickup",
+            "name": f"Store Pickup - {loc['location']}",
+            "cost": 0,
+            "estimated_days": "Same day",
+            "available": True,
+            "location": loc["location"],
+            "stock": loc["quantity"]
+        })
     
     return {
         "status": "success",
         "sku": sku,
-        "quantity": quantity,
-        "options": options,
-        "recommendation": "Click & collect for fastest pickup" if any(o['type'] == 'click_and_collect' for o in options) else "Ship to home available"
+        "product_name": product["name"],
+        "fulfillment_options": fulfillment_options,
+        "total_available_stock": sum(item["quantity"] for item in available_locations)
     }
 
-def reserve_inventory(sku: str, quantity: int, location: str = "Online Warehouse"):
+def reserve_inventory(sku: str, quantity: int, location: str):
     """
-    Reserve inventory for a pending order (temporary hold).
-    
-    Args:
-        sku: Product SKU
-        quantity: Quantity to reserve
-        location: Inventory location
-    
-    Returns:
-        Dictionary with reservation status
-        Success: {
-            "status": "success",
-            "sku": "SKU1001",
-            "quantity": 2,
-            "location": "Online Warehouse",
-            "reserved_until": "2025-12-03T15:30:00"
-        }
-        Error: {"status": "error", "message": "Insufficient stock"}
+    Reserve inventory for a customer (simulated).
     """
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
+    product = get_product(sku)
+    if not product:
+        return {"status": "error", "message": f"Product {sku} not found"}
     
-    # Check available stock
-    cursor.execute("""
-        SELECT stock_quantity, reserved_quantity
-        FROM inventory WHERE sku = ? AND location = ?
-    """, (sku, location))
-    
-    stock = cursor.fetchone()
-    if not stock:
-        conn.close()
-        return {"status": "error", "message": f"Product not found at location {location}"}
-    
-    available = stock[0] - stock[1]
-    if available < quantity:
-        conn.close()
+    inventory = get_inventory(sku, location)
+    if not inventory or inventory[0]["quantity"] < quantity:
         return {
             "status": "error",
-            "message": f"Insufficient stock. Only {available} available at {location}"
+            "message": f"Insufficient stock at {location}"
         }
     
-    # Update reserved quantity
-    cursor.execute("""
-        UPDATE inventory
-        SET reserved_quantity = reserved_quantity + ?
-        WHERE sku = ? AND location = ?
-    """, (quantity, sku, location))
-    
-    conn.commit()
-    conn.close()
-    
-    # Reservation expires in 15 minutes
-    from datetime import timedelta
-    reserved_until = (datetime.now() + timedelta(minutes=15)).isoformat()
+    # In production, would actually reserve in database
+    reservation_id = f"RES{random.randint(100000, 999999)}"
     
     return {
         "status": "success",
+        "reservation_id": reservation_id,
         "sku": sku,
         "quantity": quantity,
         "location": location,
-        "reserved_until": reserved_until,
-        "message": "Inventory reserved for 15 minutes"
+        "expires_at": (datetime.now() + timedelta(hours=24)).isoformat(),
+        "message": f"Reserved {quantity} unit(s) of {product['name']} at {location}"
     }
 
-print("✅ Inventory tools loaded")
+print("✅ Inventory tools loaded (PostgreSQL)")

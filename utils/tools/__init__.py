@@ -1,10 +1,12 @@
 """
 Tools initialization - exports all tools for easy import
+PostgreSQL Only - All tools use Neon Cloud PostgreSQL
 """
 from .recommendation_tools import (
     get_personalized_recommendations,
     suggest_bundle_deals,
-    get_seasonal_promotions
+    get_seasonal_promotions,
+    search_products_tool
 )
 
 from .inventory_tools import (
@@ -17,8 +19,8 @@ from .payment_tools import (
     process_payment,
     get_saved_payment_methods,
     apply_gift_card,
-    handle_payment_retry,
-    calculate_split_payment
+    create_payment_link,
+    get_order_status
 )
 
 from .fulfillment_tools import (
@@ -31,19 +33,18 @@ from .fulfillment_tools import (
 
 from .loyalty_tools import (
     get_loyalty_status,
-    apply_loyalty_discount,
-    apply_promo_code,
-    calculate_final_pricing,
-    check_personalized_offers
+    apply_promotion,
+    calculate_final_price,
+    register_new_customer,
+    add_loyalty_points
 )
 
 from .post_purchase_tools import (
     initiate_return,
-    process_exchange,
-    track_return_status,
-    submit_product_review,
-    request_order_modification,
-    get_order_history
+    request_exchange,
+    submit_review,
+    get_order_history,
+    track_return
 )
 
 __all__ = [
@@ -51,6 +52,7 @@ __all__ = [
     'get_personalized_recommendations',
     'suggest_bundle_deals',
     'get_seasonal_promotions',
+    'search_products_tool',
     
     # Inventory tools
     'check_inventory',
@@ -61,8 +63,7 @@ __all__ = [
     'process_payment',
     'get_saved_payment_methods',
     'apply_gift_card',
-    'handle_payment_retry',
-    'calculate_split_payment',
+    'create_payment_link',
     
     # Fulfillment tools
     'schedule_delivery',
@@ -73,18 +74,17 @@ __all__ = [
     
     # Loyalty tools
     'get_loyalty_status',
-    'apply_loyalty_discount',
-    'apply_promo_code',
-    'calculate_final_pricing',
-    'check_personalized_offers',
+    'apply_promotion',
+    'calculate_final_price',
+    'register_new_customer',
+    'add_loyalty_points',
     
     # Post-purchase tools
     'initiate_return',
-    'process_exchange',
-    'track_return_status',
-    'submit_product_review',
-    'request_order_modification',
+    'request_exchange',
+    'submit_review',
     'get_order_history',
+    'track_return',
 ]
 
-print("✅ All tools initialized and ready")
+print("✅ All tools initialized (PostgreSQL Only)")

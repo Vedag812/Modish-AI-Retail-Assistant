@@ -23,6 +23,13 @@ USER_ID = "customer_user"
 # Database Configuration
 DB_NAME = "retail_sales.db"
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", DB_NAME)
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+USE_POSTGRESQL = bool(DATABASE_URL)
+
+if USE_POSTGRESQL:
+    print("✅ Using PostgreSQL (Neon Cloud)")
+else:
+    print("⚠️  Using SQLite (local)")
 
 # Model Configuration
 DEFAULT_MODEL = "gemini-2.0-flash-exp"

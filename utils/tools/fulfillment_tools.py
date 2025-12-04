@@ -1,8 +1,7 @@
 """
-Fulfillment Agent Tools
+Fulfillment Agent Tools - PostgreSQL Only
 Schedules delivery or reserve in-store slots, notifies logistics/store staff
 """
-import sqlite3
 import json
 import random
 from datetime import datetime, timedelta
@@ -10,7 +9,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from config.config import DB_PATH, STORE_LOCATIONS
+from config.config import STORE_LOCATIONS
 
 def schedule_delivery(order_id: str, customer_address: dict, delivery_preference: str = "standard"):
     """
@@ -245,4 +244,4 @@ def update_delivery_address(order_id: str, new_address: dict):
             "order_id": order_id
         }
 
-print("✅ Fulfillment tools loaded")
+print("✅ Fulfillment tools loaded (PostgreSQL)")

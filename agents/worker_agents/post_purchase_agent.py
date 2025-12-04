@@ -12,10 +12,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from config.config import DEFAULT_MODEL, MAX_RETRIES, RETRY_DELAY
 from utils.tools.post_purchase_tools import (
     initiate_return,
-    process_exchange,
-    track_return_status,
-    submit_product_review,
-    request_order_modification,
+    request_exchange,
+    track_return,
+    submit_review,
     get_order_history
 )
 
@@ -66,8 +65,8 @@ Handle objections gracefully:
 
 Always end support interactions by asking if there's anything else you can help with.
 """,
-    tools=[initiate_return, process_exchange, track_return_status,
-           submit_product_review, request_order_modification, get_order_history]
+    tools=[initiate_return, request_exchange, track_return,
+           submit_review, get_order_history]
 )
 
-print("✅ Post-Purchase Support Agent created")
+print("✅ Post-Purchase Support Agent created (PostgreSQL)")

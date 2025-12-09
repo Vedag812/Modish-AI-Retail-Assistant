@@ -1,0 +1,62 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      // In a real app, this should check a custom claim or a document in a secure 'admins' collection.
+      // For this starter, we'll check for a document in an 'admins' collection.
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    match /users/{userId} {
+      allow read, create, update, delete: if isOwner(userId);
+      allow list: if isAdmin();
+
+      match /cart/{cartDoc} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /addresses/{addressId} {
+        allow read, list, create, update, delete: if isOwner(userId);
+      }
+    }
+
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+
+      match /reviews/{reviewId} {
+        allow list, get: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if false; // Users shouldn't edit/delete reviews after posting
+      }
+    }
+
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      
+      // A user can get their own order, or an admin can get any order.
+      allow get: if (resource.data.userId == request.auth.uid) || isAdmin();
+      
+      // Admins can list all orders. Users cannot list any orders.
+      allow list: if isAdmin();
+
+      // Prevent orders from being updated or deleted from the client.
+      allow update, delete: if false;
+    }
+
+    match /admins/{userId} {
+        allow read: if true;
+        allow write: if false; // To make someone an admin, create a doc in Firestore console.
+    }
+  }
+}

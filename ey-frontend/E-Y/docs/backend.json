@@ -1,0 +1,468 @@
+
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the e-commerce store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "price": {
+          "type": "number",
+          "description": "Current price of the product. If originalPrice is set, this is the sale price."
+        },
+        "originalPrice": {
+          "type": "number",
+          "description": "The original price of the product before a discount."
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        },
+        "sizes": {
+          "type": "object",
+          "description": "Stock quantity for each available size.",
+          "properties": {
+            "S": { "type": "number" },
+            "M": { "type": "number" },
+            "L": { "type": "number" },
+            "XL": { "type": "number" }
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": "URLs of the product images."
+        },
+        "description": {
+          "type": "string",
+          "description": "Short description of the product."
+        },
+        "rating": {
+          "type": "number",
+          "description": "Customer rating of the product."
+        },
+        "reviewCount": {
+          "type": "number",
+          "description": "The total number of reviews for the product."
+        },
+        "gender": {
+            "type": "string",
+            "enum": ["men", "women"]
+        },
+        "category": {
+            "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "price",
+        "categoryId",
+        "sizes",
+        "images",
+        "description",
+        "rating",
+        "reviewCount",
+        "gender"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07_schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a product category.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        },
+        "sectionId": {
+          "type": "string",
+          "description": "Reference to Section. (Relationship: Section 1:N Category)"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "sectionId"
+      ]
+    },
+    "Section": {
+      "$schema": "http://json-schema.org/draft-07_schema#",
+      "title": "Section",
+      "type": "object",
+      "description": "Represents a section of the store (e.g., Men, Women).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the section."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the section."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+     "Address": {
+      "title": "Address",
+      "type": "object",
+      "description": "Represents a user's shipping address.",
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "description": "Recipient's full name."
+        },
+        "address": {
+          "type": "string",
+          "description": "Street address."
+        },
+        "city": {
+          "type": "string",
+          "description": "City."
+        },
+        "zipCode": {
+          "type": "string",
+          "description": "ZIP or postal code."
+        },
+        "country": {
+          "type": "string",
+          "description": "Country."
+        }
+      },
+      "required": ["fullName", "address", "city", "zipCode", "country"]
+    },
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07_schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile, including their default shipping address.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user profile, matching the Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the user.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "First name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "Last name of the user."
+        },
+        "role": {
+            "type": "string",
+            "enum": ["customer", "admin"]
+        },
+        "defaultAddressId": {
+          "type": "string",
+          "description": "The ID of the user's default address from the addresses subcollection."
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "role"
+      ]
+    },
+    "CartItem": {
+      "title": "Cart Item",
+      "type": "object",
+      "description": "Represents an item within a shopping cart.",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "The ID of the product."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product."
+        },
+        "size": {
+          "type": "string",
+          "description": "The selected size of the product."
+        }
+      },
+      "required": [
+        "productId",
+        "quantity",
+        "size"
+      ]
+    },
+    "Cart": {
+      "$schema": "http://json-schema.org/draft-07_schema#",
+      "title": "Cart",
+      "type": "object",
+      "description": "Represents a shopping cart for a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Reference to UserProfile ID (Auth UID). (Relationship: UserProfile 1:1 Cart)"
+        },
+        "items": {
+          "type": "array",
+          "description": "A list of items in the cart.",
+          "items": {
+            "$ref": "#/entities/CartItem"
+          }
+        }
+      },
+      "required": [
+        "userId",
+        "items"
+      ]
+    },
+    "OrderItem": {
+      "title": "Order Item",
+      "type": "object",
+      "description": "Represents a single item within an order, capturing the details at the time of purchase.",
+      "properties": {
+        "productId": {
+          "type": "string",
+          "description": "The ID of the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the product at the time of purchase."
+        },
+        "price": {
+          "type": "number",
+          "description": "The price of a single unit of the product at the time of purchase."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the product purchased."
+        },
+        "size": {
+          "type": "string",
+          "description": "The selected size of the product."
+        },
+        "image": {
+          "type": "string",
+          "description": "The image ID of the. product at the time of purchase."
+        }
+      },
+      "required": [
+        "productId",
+        "name",
+        "price",
+        "quantity",
+        "size",
+        "image"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a completed customer order.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who placed the order."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the order was placed."
+        },
+        "total": {
+          "type": "number",
+          "description": "The total price of the order, including shipping and taxes."
+        },
+        "items": {
+          "type": "array",
+          "description": "A list of items included in the order.",
+          "items": {
+            "$ref": "#/entities/OrderItem"
+          }
+        },
+        "shippingAddress": {
+            "$ref": "#/entities/Address",
+            "description": "The shipping address used for this order."
+        }
+      },
+      "required": [
+        "userId",
+        "createdAt",
+        "total",
+        "items",
+        "shippingAddress"
+      ]
+    },
+    "Review": {
+        "title": "Review",
+        "type": "object",
+        "description": "Represents a customer review for a product.",
+        "properties": {
+            "userId": { "type": "string", "description": "The ID of the user who wrote the review." },
+            "productId": { "type": "string", "description": "The ID of the product being reviewed." },
+            "userName": { "type": "string", "description": "The name of the user who wrote the review." },
+            "rating": { "type": "number", "description": "The star rating given by the user (1-5)." },
+            "comment": { "type": "string", "description": "The review text." },
+            "createdAt": { "type": "string", "format": "date-time", "description": "The timestamp when the review was submitted." }
+        },
+        "required": ["userId", "productId", "userName", "rating", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "sections/{sectionId}",
+        "definition": {
+          "entityName": "Section",
+          "schema": {
+            "$ref": "#/entities/Section"
+          },
+          "description": "Represents a section of the store (e.g., Men, Women).",
+          "params": [
+            {
+              "name": "sectionId",
+              "description": "Unique identifier for the section."
+            }
+          ]
+        }
+      },
+      {
+        "path": "sections/{sectionId}/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/entities/Category"
+          },
+          "description": "Represents a product category within a section.",
+          "params": [
+            {
+              "name": "sectionId",
+              "description": "Unique identifier for the section."
+            },
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/entities/Product"
+          },
+          "description": "Represents a product. Products are in a top-level collection for easier querying by admins.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+          "path": "products/{productId}/reviews/{reviewId}",
+          "definition": {
+              "entityName": "Review",
+              "schema": { "$ref": "#/entities/Review" },
+              "description": "A subcollection of reviews for a specific product.",
+              "params": [
+                  { "name": "productId", "description": "The product's ID." },
+                  { "name": "reviewId", "description": "The review's unique ID." }
+              ]
+          }
+      },
+      {
+        "path": "users/{userId}",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/entities/UserProfile"
+          },
+          "description": "Represents a user profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user. This must match the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+       {
+        "path": "users/{userId}/addresses/{addressId}",
+        "definition": {
+          "entityName": "Address",
+          "schema": { "$ref": "#/entities/Address" },
+          "description": "A user's saved shipping addresses.",
+          "params": [
+            { "name": "userId", "description": "The user's ID." },
+            { "name": "addressId", "description": "The address's unique ID." }
+          ]
+        }
+      },
+      {
+        "path": "users/{userId}/cart",
+        "definition": {
+          "entityName": "Cart",
+          "schema": {
+            "$ref": "#/entities/Cart"
+          },
+          "description": "Represents a shopping cart for a user, stored as a single document in a subcollection.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user. This must match the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/entities/Order"
+          },
+          "description": "Represents a historical order for any user. Stored in a root collection for admin access.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support an e-commerce application, mirroring the user interface and functionality requirements. It focuses on Products, Categories, Sections (Men, Women), User profiles, and Shopping Carts. The structure prioritizes authorization independence through data denormalization, ensuring that security rules are simple, robust, and easily debuggable. Each entity follows a clear naming convention and consistent field naming for predictability and maintainability."
+  }
+}
+
+    

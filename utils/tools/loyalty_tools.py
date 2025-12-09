@@ -1,5 +1,5 @@
 """
-Loyalty Agent Tools - PostgreSQL Only
+Loyalty Agent Tools - Firebase Firestore
 Handles loyalty points, tiers, discounts, and offers
 """
 import json
@@ -66,35 +66,91 @@ def get_loyalty_status(customer_id: str):
 def apply_promotion(promo_code: str, order_total: float, customer_id: str = None):
     """
     Validate and apply a promotion code.
+    Supports timed promotions with valid_from and valid_until dates.
     """
     promotions = get_promotions()
     promo = None
     for p in promotions:
-        if p["code"].upper() == promo_code.upper():
+        code_field = p.get("code") or p.get("promo_code", "")
+        if code_field.upper() == promo_code.upper():
             promo = p
             break
     
     if not promo:
         return {"status": "error", "message": f"Invalid promo code: {promo_code}"}
     
-    if order_total < promo["min_order"]:
+    # Check timed promotion validity
+    now = datetime.now()
+    
+    # Check valid_from (promotion not yet started)
+    valid_from = promo.get("valid_from")
+    if valid_from:
+        try:
+            if isinstance(valid_from, str):
+                start_date = datetime.fromisoformat(valid_from.replace('Z', '+00:00').replace('+00:00', ''))
+            else:
+                start_date = valid_from
+            if now < start_date:
+                return {
+                    "status": "error",
+                    "message": f"Promo code {promo_code} is not active yet. Valid from: {start_date.strftime('%Y-%m-%d')}"
+                }
+        except (ValueError, TypeError):
+            pass  # If date parsing fails, allow the promo
+    
+    # Check valid_until (promotion expired)
+    valid_until = promo.get("valid_until") or promo.get("expires_at")
+    if valid_until:
+        try:
+            if isinstance(valid_until, str):
+                end_date = datetime.fromisoformat(valid_until.replace('Z', '+00:00').replace('+00:00', ''))
+            else:
+                end_date = valid_until
+            if now > end_date:
+                return {
+                    "status": "error",
+                    "message": f"Promo code {promo_code} has expired on {end_date.strftime('%Y-%m-%d')}"
+                }
+        except (ValueError, TypeError):
+            pass  # If date parsing fails, allow the promo
+    
+    # Check minimum order
+    min_order = promo.get("min_order", 0)
+    if order_total < min_order:
         return {
             "status": "error",
-            "message": f"Minimum order of ${promo['min_order']} required for {promo_code}"
+            "message": f"Minimum order of ₹{min_order} required for {promo_code}"
         }
     
-    discount_amount = round(order_total * (promo["discount_percent"] / 100), 2)
+    discount_percent = promo.get("discount_percent", 0)
+    discount_amount = round(order_total * (discount_percent / 100), 2)
     new_total = round(order_total - discount_amount, 2)
+    
+    # Include expiration info in response
+    expiry_info = ""
+    if valid_until:
+        try:
+            if isinstance(valid_until, str):
+                end_date = datetime.fromisoformat(valid_until.replace('Z', '+00:00').replace('+00:00', ''))
+            else:
+                end_date = valid_until
+            days_left = (end_date - now).days
+            if days_left <= 7:
+                expiry_info = f" (Expires in {days_left} days!)"
+        except:
+            pass
     
     return {
         "status": "success",
         "promo_code": promo_code,
-        "description": promo["description"],
+        "description": promo.get("description", ""),
         "original_total": order_total,
-        "discount_percent": promo["discount_percent"],
+        "discount_percent": discount_percent,
         "discount_amount": discount_amount,
         "new_total": new_total,
-        "message": f"Promo {promo_code} applied! You saved ${discount_amount}"
+        "valid_from": str(valid_from) if valid_from else None,
+        "valid_until": str(valid_until) if valid_until else None,
+        "message": f"Promo {promo_code} applied! You saved ₹{discount_amount}{expiry_info}"
     }
 
 def calculate_final_price(customer_id: str, base_price: float, promo_code: str = None):
@@ -210,4 +266,84 @@ def add_loyalty_points(customer_id: str, points: int, reason: str = "Purchase"):
         "message": f"Added {points} points for {reason}. New balance: {new_points}"
     }
 
-print("✅ Loyalty and offers tools loaded (PostgreSQL)")
+
+def get_active_promotions():
+    """
+    Get all currently active promotions (considering timed validity).
+    
+    Returns:
+        Dictionary with list of active promotions and their details
+    """
+    promotions = get_promotions()
+    now = datetime.now()
+    
+    active_promos = []
+    upcoming_promos = []
+    expired_promos = []
+    
+    for promo in promotions:
+        code = promo.get("code") or promo.get("promo_code", "")
+        valid_from = promo.get("valid_from")
+        valid_until = promo.get("valid_until") or promo.get("expires_at")
+        
+        # Parse dates
+        start_date = None
+        end_date = None
+        
+        if valid_from:
+            try:
+                if isinstance(valid_from, str):
+                    start_date = datetime.fromisoformat(valid_from.replace('Z', ''))
+                else:
+                    start_date = valid_from
+            except:
+                pass
+        
+        if valid_until:
+            try:
+                if isinstance(valid_until, str):
+                    end_date = datetime.fromisoformat(valid_until.replace('Z', ''))
+                else:
+                    end_date = valid_until
+            except:
+                pass
+        
+        promo_info = {
+            "code": code,
+            "description": promo.get("description", ""),
+            "discount_percent": promo.get("discount_percent"),
+            "min_order": promo.get("min_order", promo.get("min_purchase", 0)),
+            "valid_from": str(valid_from) if valid_from else "Always",
+            "valid_until": str(valid_until) if valid_until else "Never expires"
+        }
+        
+        # Categorize promotion
+        if start_date and now < start_date:
+            promo_info["status"] = "upcoming"
+            promo_info["starts_in_days"] = (start_date - now).days
+            upcoming_promos.append(promo_info)
+        elif end_date and now > end_date:
+            promo_info["status"] = "expired"
+            expired_promos.append(promo_info)
+        else:
+            promo_info["status"] = "active"
+            if end_date:
+                days_left = (end_date - now).days
+                promo_info["expires_in_days"] = days_left
+                if days_left <= 3:
+                    promo_info["urgency"] = "⚠️ Expiring soon!"
+            active_promos.append(promo_info)
+    
+    return {
+        "status": "success",
+        "active_promotions": active_promos,
+        "active_count": len(active_promos),
+        "upcoming_promotions": upcoming_promos,
+        "upcoming_count": len(upcoming_promos),
+        "expired_promotions": expired_promos,
+        "expired_count": len(expired_promos),
+        "message": f"Found {len(active_promos)} active promotions, {len(upcoming_promos)} upcoming, {len(expired_promos)} expired"
+    }
+
+
+print("✅ Loyalty and offers tools loaded (Firebase)")

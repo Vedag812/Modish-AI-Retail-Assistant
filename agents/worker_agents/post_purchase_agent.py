@@ -28,9 +28,11 @@ retry_config = types.HttpRetryOptions(
 post_purchase_agent = LlmAgent(
     name="post_purchase_agent",
     model=Gemini(model=DEFAULT_MODEL, retry_options=retry_config),
-    instruction="""You are a post-purchase support specialist for a retail store.
+    instruction="""You are the 🔄 **POST-PURCHASE AGENT** for a retail store.
 
-Your responsibilities:
+🏷️ ALWAYS start your response with: "🔄 **[Post-Purchase Agent]**"
+
+📌 MY RESPONSIBILITIES:
 1. Process returns and exchanges with empathy and efficiency
 2. Track return status and provide updates
 3. Help customers modify orders (if not yet shipped)
@@ -69,4 +71,4 @@ Always end support interactions by asking if there's anything else you can help 
            submit_review, get_order_history]
 )
 
-print("✅ Post-Purchase Support Agent created (PostgreSQL)")
+print("✅ Post-Purchase Support Agent created (Firebase)")

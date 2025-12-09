@@ -49,7 +49,7 @@ All in **one natural conversation** - no menus, no switching screens!
 
 - ✅ **Google Gemini 2.0** - AI brain powering all agents
 - ✅ **Razorpay API** - Real payment links (test mode available)
-- ✅ **PostgreSQL (Neon Cloud)** - Cloud database with 1200+ products
+- ✅ **Firebase Firestore** - Cloud NoSQL database with 1200+ products
 - ✅ **Indian Product Catalog** - 1200+ products across 12 categories
 - ✅ **5 Indian Warehouses** - Mumbai, Delhi, Bengaluru, Chennai, Hyderabad
 
@@ -102,9 +102,18 @@ pip install -r requirements.txt
 
 # 3. Create .env file with your API keys:
 GEMINI_API_KEY=your_gemini_api_key_here
-DATABASE_URL=your_postgresql_url_here
+FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
 RAZORPAY_KEY_ID=rzp_test_xxxxx
 RAZORPAY_KEY_SECRET=your_razorpay_secret
+
+# 4. Setup Firebase:
+#    - Go to https://console.firebase.google.com/
+#    - Create a project and enable Firestore
+#    - Generate service account key (JSON)
+#    - Save as firebase-service-account.json
+
+# 5. Populate database (first time only):
+python data/populate_firebase.py
 ```
 
 ### Run the App
@@ -238,12 +247,15 @@ Get your free API key from [Google AI Studio](https://aistudio.google.com/apikey
 GEMINI_API_KEY=your_key_here
 ```
 
-### Required: PostgreSQL Database
+### Required: Firebase Firestore
 
-Get free PostgreSQL from [Neon](https://neon.tech):
+Setup Firebase:
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create project → Enable Firestore Database
+3. Download service account key
 
 ```env
-DATABASE_URL=postgresql://user:pass@host/dbname?sslmode=require
+FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
 ```
 
 ### Optional: Razorpay Payments
@@ -277,8 +289,9 @@ retail_sales_agent/
 │       └── post_purchase_agent.py
 │
 ├── utils/
-│   ├── db.py                # PostgreSQL connection (Neon Cloud)
-│   ├── tools/               # Agent tool functions
+│   ├── db.py                # Firebase wrapper (backwards compatible)
+│   ├── firebase_db.py       # Firebase Firestore connection
+│   └── tools/               # Agent tool functions
 │   │   ├── recommendation_tools.py
 │   │   ├── inventory_tools.py
 │   │   ├── payment_tools.py      # Razorpay integration
@@ -307,7 +320,7 @@ retail_sales_agent/
 
 ### How Razorpay Integration Works
 
-1. **Customer selects product** → Agent creates order in PostgreSQL
+1. **Customer selects product** → Agent creates order in Firebase
 2. **Payment link generated** → Real Razorpay URL (e.g., `https://rzp.io/rzp/xxx`)
 3. **Customer pays** → Click link, complete payment on Razorpay
 4. **Confirm payment** → Agent updates order status to "PAID"
@@ -318,7 +331,7 @@ retail_sales_agent/
 ```
 Search → Select → Create Order → Payment Link → Pay → Confirm → Deliver
          ↓           ↓              ↓           ↓       ↓         ↓
-       Agent    PostgreSQL      Razorpay    Customer   Agent   Tracking
+       Agent      Firebase       Razorpay    Customer   Agent   Tracking
 ```
 
 ---
@@ -342,13 +355,13 @@ All of this happens **automatically** in a natural conversation!
 ## 📊 Tech Stack
 
 | Technology | Purpose |
-|------------|---------|
+|------------|---------||
 | **Google ADK** | Agent Development Kit |
-| **Google Gemini 2.0 Flash** | AI Model |
-| **PostgreSQL (Neon)** | Cloud Database |
+| **Google Gemini 2.5** | AI Model |
+| **Firebase Firestore** | Cloud NoSQL Database |
 | **Razorpay** | Payment Gateway |
 | **Python 3.11+** | Runtime |
-| **psycopg2** | PostgreSQL Driver |
+| **firebase-admin** | Firebase SDK |
 
 ---
 
@@ -359,10 +372,10 @@ All of this happens **automatically** in a natural conversation!
 - Add: `GEMINI_API_KEY=your_key`
 - Get key from: https://aistudio.google.com/apikey
 
-**"Database connection failed"**
-- Check DATABASE_URL in .env
-- Ensure Neon PostgreSQL is running
-- Verify connection string format
+**"Firebase credentials not found"**
+- Download service account JSON from Firebase Console
+- Save as `firebase-service-account.json` in project root
+- Set path in .env: `FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json`
 
 **"Razorpay error"**
 - Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET
@@ -397,7 +410,7 @@ MIT License - Feel free to use for personal or commercial projects!
 - **GitHub**: https://github.com/Vedag812/Retail-Agent
 - **Google Gemini**: https://ai.google.dev/
 - **Razorpay**: https://razorpay.com/
-- **Neon PostgreSQL**: https://neon.tech/
+- **Firebase**: https://firebase.google.com/
 
 ---
 
@@ -405,7 +418,7 @@ MIT License - Feel free to use for personal or commercial projects!
 
 - ❤️ Google Gemini AI
 - 💳 Razorpay Payment Gateway
-- 🐘 Neon PostgreSQL
+- 🔥 Firebase Firestore
 - 🇮🇳 Indian Product Catalog (1200+ products)
 
 ---

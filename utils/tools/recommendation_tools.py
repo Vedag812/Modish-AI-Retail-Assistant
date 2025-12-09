@@ -1,7 +1,7 @@
 """
 Recommendation Agent Tools
 Analyzes customer profile, browsing history, and seasonal trends to suggest products
-Uses PostgreSQL (Neon Cloud) ONLY
+Uses Firebase Firestore
 """
 import json
 import random
@@ -10,7 +10,8 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-from utils.db import get_db, execute_query, get_customer, search_products, get_promotions
+from utils.db import get_customer, search_products
+from utils.firebase_db import get_all_products, get_product, get_promotions
 
 def get_personalized_recommendations(customer_id: str, max_recommendations: int = 5):
     """
@@ -27,7 +28,7 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
     if not customer:
         return {"status": "error", "message": f"Customer {customer_id} not found"}
     
-    name = customer["name"]
+    name = customer.get("name", "Customer")
     browsing_history = customer.get("browsing_history", [])
     purchase_history = customer.get("purchase_history", [])
     preferences = customer.get("preferences", {})
@@ -40,61 +41,42 @@ def get_personalized_recommendations(customer_id: str, max_recommendations: int 
     
     recommendations = []
     
-    conn = get_db()
-    cursor = conn.cursor()
+    # Get all products from Firebase
+    all_products = get_all_products(limit=100)
     
-    # Recommend from favorite categories
+    # Sort by rating
+    all_products.sort(key=lambda x: (x.get('rating', 0), x.get('reviews_count', 0)), reverse=True)
+    
+    # Recommend from favorite categories first
     if favorite_categories:
-        placeholders = ','.join(['%s'] * len(favorite_categories))
-        exclude_placeholders = ','.join(['%s'] * len(purchased_skus)) if purchased_skus else '%s'
-        
-        cursor.execute(f"""
-            SELECT sku, name, category, current_price, rating, reviews_count
-            FROM products
-            WHERE category IN ({placeholders}) AND sku NOT IN ({exclude_placeholders})
-            ORDER BY rating DESC, reviews_count DESC
-            LIMIT %s
-        """, (*favorite_categories, *(purchased_skus if purchased_skus else ['']), max_recommendations))
-        
-        for row in cursor.fetchall():
-            recommendations.append({
-                "sku": row[0],
-                "name": row[1],
-                "category": row[2],
-                "price": float(row[3]),
-                "rating": float(row[4]) if row[4] else 0,
-                "reason": f"Recommended based on your interest in {row[2]}"
-            })
+        for product in all_products:
+            if product.get('category') in favorite_categories and product.get('sku') not in purchased_skus:
+                if len(recommendations) >= max_recommendations:
+                    break
+                recommendations.append({
+                    "sku": product.get('sku'),
+                    "name": product.get('name'),
+                    "category": product.get('category'),
+                    "price": float(product.get('current_price', product.get('price', 0))),
+                    "rating": float(product.get('rating', 0)),
+                    "reason": f"Recommended based on your interest in {product.get('category')}"
+                })
     
     # Add trending products if we need more
     if len(recommendations) < max_recommendations:
-        excluded_skus = [r['sku'] for r in recommendations] + purchased_skus
-        if excluded_skus:
-            placeholders = ','.join(['%s'] * len(excluded_skus))
-            params = tuple(excluded_skus) + (max_recommendations - len(recommendations),)
-        else:
-            placeholders = '%s'
-            params = ('', max_recommendations - len(recommendations))
-        
-        cursor.execute(f"""
-            SELECT sku, name, category, current_price, rating, reviews_count
-            FROM products
-            WHERE sku NOT IN ({placeholders})
-            ORDER BY rating DESC, reviews_count DESC
-            LIMIT %s
-        """, params)
-        
-        for row in cursor.fetchall():
-            recommendations.append({
-                "sku": row[0],
-                "name": row[1],
-                "category": row[2],
-                "price": float(row[3]),
-                "rating": float(row[4]) if row[4] else 0,
-                "reason": "Trending item with high ratings"
-            })
-    
-    conn.close()
+        existing_skus = [r['sku'] for r in recommendations] + purchased_skus
+        for product in all_products:
+            if product.get('sku') not in existing_skus:
+                if len(recommendations) >= max_recommendations:
+                    break
+                recommendations.append({
+                    "sku": product.get('sku'),
+                    "name": product.get('name'),
+                    "category": product.get('category'),
+                    "price": float(product.get('current_price', product.get('price', 0))),
+                    "rating": float(product.get('rating', 0)),
+                    "reason": "Trending item with high ratings"
+                })
     
     return {
         "status": "success",
@@ -106,46 +88,37 @@ def suggest_bundle_deals(sku: str):
     """
     Suggest complementary products that go well together as a bundle.
     """
-    conn = get_db()
-    cursor = conn.cursor()
-    
     # Get main product
-    cursor.execute("""
-        SELECT sku, name, category, current_price
-        FROM products WHERE sku = %s
-    """, (sku,))
-    
-    main_product = cursor.fetchone()
+    main_product = get_product(sku)
     if not main_product:
-        conn.close()
         return {"status": "error", "message": f"Product {sku} not found"}
     
-    main_sku, main_name, main_category, main_price = main_product
+    main_sku = main_product.get('sku', sku)
+    main_name = main_product.get('name', '')
+    main_category = main_product.get('category', '')
+    main_price = main_product.get('current_price', main_product.get('price', 0))
     
     # Get complementary products from same category
-    cursor.execute("""
-        SELECT sku, name, current_price
-        FROM products
-        WHERE category = %s AND sku != %s
-        ORDER BY rating DESC
-        LIMIT 3
-    """, (main_category, sku))
+    all_products = get_all_products(limit=100)
+    same_category = [p for p in all_products if p.get('category') == main_category and p.get('sku') != sku]
+    
+    # Sort by rating and take top 3
+    same_category.sort(key=lambda x: x.get('rating', 0), reverse=True)
     
     bundle_items = []
     total_discount = 0
     
-    for row in cursor.fetchall():
-        discount_amount = round(float(row[2]) * 0.10, 2)
+    for product in same_category[:3]:
+        price = float(product.get('current_price', product.get('price', 0)))
+        discount_amount = round(price * 0.10, 2)
         bundle_items.append({
-            "sku": row[0],
-            "name": row[1],
-            "original_price": float(row[2]),
-            "bundle_price": round(float(row[2]) - discount_amount, 2),
+            "sku": product.get('sku'),
+            "name": product.get('name'),
+            "original_price": price,
+            "bundle_price": round(price - discount_amount, 2),
             "discount": "10%"
         })
         total_discount += discount_amount
-    
-    conn.close()
     
     return {
         "status": "success",
@@ -156,7 +129,7 @@ def suggest_bundle_deals(sku: str):
         },
         "bundle_items": bundle_items,
         "bundle_savings": round(total_discount, 2),
-        "message": f"Save ${round(total_discount, 2)} when you buy these items together!"
+        "message": f"Save ₹{round(total_discount, 2)} when you buy these items together!"
     }
 
 def get_seasonal_promotions(category: str = None):
@@ -164,6 +137,8 @@ def get_seasonal_promotions(category: str = None):
     Get current seasonal promotions and deals.
     """
     promotions = get_promotions()
+    if category:
+        promotions = [p for p in promotions if p.get('category') == category or not p.get('category')]
     return {
         "status": "success",
         "promotions": promotions,
@@ -182,4 +157,4 @@ def search_products_tool(query: str = "", category: str = "", max_price: float =
         "filters": {"category": category, "max_price": max_price, "min_price": min_price}
     }
 
-print("✅ Recommendation tools loaded (PostgreSQL)")
+print("✅ Recommendation tools loaded (Firebase)")

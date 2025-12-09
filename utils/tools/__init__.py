@@ -1,6 +1,6 @@
 """
 Tools initialization - exports all tools for easy import
-PostgreSQL Only - All tools use Neon Cloud PostgreSQL
+Firebase Firestore - All tools use Google Firebase
 """
 from .recommendation_tools import (
     get_personalized_recommendations,
@@ -87,4 +87,4 @@ __all__ = [
     'track_return',
 ]
 
-print("✅ All tools initialized (PostgreSQL Only)")
+print("✅ All tools initialized (Firebase)")

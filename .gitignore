@@ -26,6 +26,10 @@ wheels/
 # Environment
 .env
 .venv
+firebase-service-account.json
+firebase-credentials*.json
+__MACOSX/
+._*
 
 # Database
 *.db

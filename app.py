@@ -14,22 +14,30 @@ from agents.sales_agent.sales_agent import sales_agent
 
 def init_database():
     """Initialize database with Indian dataset"""
-    print("\n📊 Initializing database with Indian dataset...")
+    print("\n📊 Checking Firebase database...")
     try:
         # Add project root to path
         project_root = os.path.dirname(os.path.abspath(__file__))
         if project_root not in sys.path:
             sys.path.insert(0, project_root)
         
-        # Import and run the Indian dataset population
-        from data.populate_india_dataset import main as populate_indian_data
-        populate_indian_data()
+        # Check if Firebase is connected and has data
+        from utils.firebase_db import get_db, get_products_count, get_all_customers
+        db = get_db()
+        
+        product_count = get_products_count()
+        customer_count = len(get_all_customers(limit=100))
+        
+        print(f"   📦 Products: {product_count}")
+        print(f"   👥 Customers: {customer_count}")
+        
+        if product_count == 0:
+            print("   ⚠️  No products found. Run: python data/populate_firebase.py")
+        
         return True
     except Exception as e:
-        print(f"⚠️  Database initialization warning: {e}")
-        import traceback
-        traceback.print_exc()
-        print("   Continuing with existing database...\n")
+        print(f"⚠️  Database check warning: {e}")
+        print("   Make sure Firebase is configured correctly.\n")
         return False
 
 def print_banner():
@@ -61,11 +69,11 @@ def print_banner():
 def print_features():
     """Display feature list"""
     print("\n    🔗 ACTIVE INTEGRATIONS:")
-    print("       ✓ Google Gemini AI (gemini-2.0-flash-exp)")
+    print("       ✓ Google Gemini AI (gemini-2.5-flash)")
     print("       ✓ Razorpay Payment Gateway (Real API)")
-    print("       ✓ PostgreSQL Database (Neon Cloud)")
-    print("       ✓ FakeStore API (Product Catalog)")
-    print("       ✓ DummyJSON API (Inventory)")
+    print("       ✓ Firebase Firestore (Cloud Database)")
+    print("       ✓ 1200+ Indian Products Catalog")
+    print("       ✓ 5 Indian Warehouses")
     print("\n    ══════════════════════════════════════════════════════════════════\n")
 
 async def chat():

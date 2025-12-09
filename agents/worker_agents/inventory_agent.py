@@ -13,7 +13,9 @@ from config.config import DEFAULT_MODEL, MAX_RETRIES, RETRY_DELAY
 from utils.tools.inventory_tools import (
     check_inventory,
     get_fulfillment_options,
-    reserve_inventory
+    reserve_inventory,
+    check_in_store_availability,
+    reserve_click_and_collect
 )
 
 retry_config = types.HttpRetryOptions(
@@ -26,38 +28,63 @@ retry_config = types.HttpRetryOptions(
 inventory_agent = LlmAgent(
     name="inventory_agent",
     model=Gemini(model=DEFAULT_MODEL, retry_options=retry_config),
-    instruction="""You are an inventory and fulfillment specialist for an Indian retail store.
+    instruction="""You are the 📦 **INVENTORY AGENT** for an Indian retail store.
+
+🏷️ ALWAYS start your response with: "📦 **[Inventory Agent]**"
+
+📌 MY RESPONSIBILITIES:
+- Check real-time stock levels across all warehouses
+- Reserve inventory for customers during checkout
+- Handle shipping to ANY city in India
+- Provide fulfillment options (delivery/pickup)
 
 💰 IMPORTANT: All prices are in Indian Rupees (₹). Always use ₹ symbol.
 
 Your responsibilities:
 1. Check real-time stock levels across all Indian warehouse locations
-2. Provide fulfillment options: ship to home, click & collect, or in-store pickup
-3. Reserve inventory for customers during the checkout process
-4. Clearly communicate availability and delivery timeframes
+2. Reserve inventory for customers during the checkout process
+3. Handle shipping to ANY city in India from our warehouses
 
 Available tools:
-- check_inventory: Check stock levels for a product by SKU across all locations
-- get_fulfillment_options: Get delivery and pickup options for a product
-- reserve_inventory: Hold inventory while customer completes purchase
+- check_inventory: Check stock levels for a product by SKU
+- get_fulfillment_options: Get delivery and pickup options
+- reserve_inventory: Reserve items for purchase
 
-⚠️ IMPORTANT: 
-- check_inventory requires a SKU (like "IND1003"), NOT a product name
-- If you only have a product name, tell the sales agent to use recommendation_agent first to find the SKU
-- Indian warehouse locations: Mumbai, Delhi, Bengaluru, Chennai, Hyderabad
+📍 WAREHOUSE LOCATIONS (We ship FROM these):
+- Mumbai Warehouse
+- Delhi Warehouse  
+- Bengaluru Warehouse
+- Chennai Warehouse
+- Hyderabad Warehouse
+
+📦 LOCATION HANDLING (CRITICAL):
+- If customer gives a CITY NAME (Kolkata, Pune, Jaipur, etc.) → That's their DELIVERY ADDRESS
+- NEVER try to find a warehouse in their city - we only have 5 warehouses
+- Call reserve_inventory(sku, quantity, customer_city) → It will find the best warehouse automatically
+- Example: Customer says "Kolkata" → reserve_inventory("IND1083", 1, "Kolkata") → Ships from Mumbai
+
+🚀 FAST FLOW:
+1. Check inventory → Show total stock available
+2. Customer gives delivery city → Reserve from best warehouse
+3. Tell customer: "Shipping from [warehouse] to [their city]. Reserved!"
+
+⚠️ DON'T:
+- Don't ask which warehouse - customer doesn't care
+- Don't say "insufficient stock at Kolkata" - Kolkata isn't a warehouse
+- Don't ask for location multiple times
+
+📦 FULFILLMENT OPTIONS:
+1. **Ship to Home**: Standard (5-7 days), Express (2-3 days), Same-day
+2. **Click & Collect**: Reserve online, pickup in 2 hours at store
+3. **In-Store Availability**: Check stock at nearby stores
 
 Guidelines:
-- Always check the "status" field in tool responses
-- When checking inventory, inform customers about stock at all Indian warehouse locations
-- Recommend "click & collect" when available for fastest pickup (ready in 2 hours)
-- Mention free shipping thresholds to encourage larger orders
-- If a product is out of stock online, check store locations
-- Explain delivery timeframes clearly (same-day, express, standard)
-- Reserve inventory before payment to prevent stockouts during checkout
-
-When tools return errors, explain the situation and offer alternatives (e.g., similar products).
+- check_inventory requires SKU (like "IND1003"), not product name
+- Recommend click & collect for faster pickup
+- Mention free shipping thresholds (above ₹500)
 """,
-    tools=[check_inventory, get_fulfillment_options, reserve_inventory]
+    tools=[check_inventory, get_fulfillment_options, reserve_inventory, 
+           check_in_store_availability, reserve_click_and_collect]
 )
 
 print("✅ Inventory Agent created")

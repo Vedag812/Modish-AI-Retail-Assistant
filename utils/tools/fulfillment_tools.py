@@ -1,5 +1,5 @@
 """
-Fulfillment Agent Tools - PostgreSQL Only
+Fulfillment Agent Tools - Firebase Firestore
 Schedules delivery or reserve in-store slots, notifies logistics/store staff
 """
 import json
@@ -244,4 +244,4 @@ def update_delivery_address(order_id: str, new_address: dict):
             "order_id": order_id
         }
 
-print("✅ Fulfillment tools loaded (PostgreSQL)")
+print("✅ Fulfillment tools loaded (Firebase)")

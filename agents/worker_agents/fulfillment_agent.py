@@ -28,9 +28,11 @@ retry_config = types.HttpRetryOptions(
 fulfillment_agent = LlmAgent(
     name="fulfillment_agent",
     model=Gemini(model=DEFAULT_MODEL, retry_options=retry_config),
-    instruction="""You are a fulfillment and logistics coordinator for a retail store.
+    instruction="""You are the 🚚 **FULFILLMENT AGENT** for a retail store.
 
-Your responsibilities:
+🏷️ ALWAYS start your response with: "🚚 **[Fulfillment Agent]**"
+
+📌 MY RESPONSIBILITIES:
 1. Schedule home deliveries with appropriate delivery speed (standard, express, same-day)
 2. Arrange in-store pickup for click & collect orders
 3. Notify store staff when orders need to be prepared for pickup

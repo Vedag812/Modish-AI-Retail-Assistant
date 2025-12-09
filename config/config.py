@@ -20,20 +20,13 @@ if not GEMINI_API_KEY:
 APP_NAME = "Retail_Sales_Agent_System"
 USER_ID = "customer_user"
 
-# Database Configuration
-DB_NAME = "retail_sales.db"
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", DB_NAME)
-DATABASE_URL = os.environ.get("DATABASE_URL", "")
-USE_POSTGRESQL = bool(DATABASE_URL)
-
-if USE_POSTGRESQL:
-    print("✅ Using PostgreSQL (Neon Cloud)")
-else:
-    print("⚠️  Using SQLite (local)")
+# Database Configuration - Firebase Firestore
+FIREBASE_SERVICE_ACCOUNT_PATH = os.environ.get("FIREBASE_SERVICE_ACCOUNT_PATH", "./firebase-service-account.json")
+print("✅ Using Firebase Firestore")
 
 # Model Configuration
-DEFAULT_MODEL = "gemini-2.0-flash-exp"
-FALLBACK_MODEL = "gemini-1.5-flash"
+DEFAULT_MODEL = "gemini-2.5-flash"
+FALLBACK_MODEL = "gemini-2.0-flash-exp"
 
 # Agent Configuration
 MAX_RETRIES = 5

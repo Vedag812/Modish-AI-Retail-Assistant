@@ -1,9 +1,10 @@
 """
 Utils Package Initialization
+Firebase Firestore Database
 """
-from .database import initialize_database, get_connection
+from .firebase_db import init_firebase, get_db
 
 __all__ = [
-    'initialize_database',
-    'get_connection'
+    'init_firebase',
+    'get_db'
 ]

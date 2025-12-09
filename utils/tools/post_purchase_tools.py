@@ -1,5 +1,5 @@
 """
-Post-Purchase Support Tools - PostgreSQL Only
+Post-Purchase Support Tools - Firebase Firestore
 Handles returns, exchanges, reviews, and order history
 """
 import random
@@ -166,4 +166,4 @@ def track_return(return_id: str):
         "message": f"Return {return_id} is currently: {current_status.replace('_', ' ').title()}"
     }
 
-print("✅ Post-purchase support tools loaded (PostgreSQL)")
+print("✅ Post-purchase support tools loaded (Firebase)")

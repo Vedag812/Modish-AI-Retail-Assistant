@@ -92,6 +92,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     message: str
     session_id: str
+    agent_name: str = "Sales Agent"  # Which agent responded
 
 class ProductSearchRequest(BaseModel):
     query: str = ""
@@ -111,6 +112,52 @@ class PaymentRequest(BaseModel):
     amount: float
     description: str
     items: List[dict]
+
+# ==================== AGENT DETECTION ====================
+
+def detect_agent_from_response(response_text: str, user_input: str) -> str:
+    """Detect which agent handled the query based on response content and user input"""
+    response_lower = response_text.lower()
+    input_lower = user_input.lower()
+    
+    # Check for loyalty/promo related keywords
+    loyalty_keywords = ['loyalty', 'points', 'tier', 'bronze', 'silver', 'gold', 'platinum', 
+                       'promo', 'coupon', 'discount code', 'voucher', 'member', 'reward']
+    if any(kw in response_lower for kw in loyalty_keywords) or any(kw in input_lower for kw in ['promo', 'coupon', 'loyalty', 'points', 'discount code']):
+        return "Loyalty Agent"
+    
+    # Check for inventory/stock related keywords
+    inventory_keywords = ['stock', 'inventory', 'available', 'out of stock', 'warehouse', 
+                         'quantity available', 'in stock', 'units']
+    if any(kw in response_lower for kw in inventory_keywords) or any(kw in input_lower for kw in ['stock', 'inventory', 'available']):
+        return "Inventory Agent"
+    
+    # Check for payment related keywords
+    payment_keywords = ['payment', 'razorpay', 'pay now', 'checkout', 'transaction', 
+                       'payment link', 'upi', 'card payment', 'pay ₹', 'pay rs']
+    if any(kw in response_lower for kw in payment_keywords) or any(kw in input_lower for kw in ['pay', 'payment', 'checkout']):
+        return "Payment Agent"
+    
+    # Check for order/fulfillment related keywords
+    fulfillment_keywords = ['order status', 'shipping', 'delivery', 'track order', 'dispatched',
+                           'order #', 'order id', 'delivered', 'estimated delivery', 'shipment']
+    if any(kw in response_lower for kw in fulfillment_keywords) or any(kw in input_lower for kw in ['order status', 'track', 'delivery', 'shipping']):
+        return "Fulfillment Agent"
+    
+    # Check for return/refund related keywords
+    post_purchase_keywords = ['return', 'refund', 'exchange', 'cancel order', 'warranty',
+                             'return policy', 'refund status', 'return request']
+    if any(kw in response_lower for kw in post_purchase_keywords) or any(kw in input_lower for kw in ['return', 'refund', 'cancel', 'exchange']):
+        return "Post-Purchase Agent"
+    
+    # Check for recommendation related keywords
+    recommendation_keywords = ['recommend', 'suggestion', 'you might like', 'similar products',
+                              'based on your', 'popular', 'trending', 'best seller']
+    if any(kw in response_lower for kw in recommendation_keywords) or any(kw in input_lower for kw in ['recommend', 'suggest', 'similar']):
+        return "Recommendation Agent"
+    
+    # Default to Sales Agent
+    return "Sales Agent"
 
 # ==================== CHAT ENDPOINT ====================
 
@@ -151,6 +198,7 @@ async def chat_with_agent(request: ChatRequest):
             return ChatResponse(message="I'm ready to help!", session_id=session_id)
         
         user_input = last_message.content
+        original_input = user_input  # Save original for agent detection
         
         # Add customer context if available
         if request.customer_id:
@@ -174,7 +222,10 @@ async def chat_with_agent(request: ChatRequest):
         if not response_text:
             response_text = "I'm processing your request. How else can I help?"
         
-        return ChatResponse(message=response_text, session_id=session_id)
+        # Detect which agent responded
+        agent_name = detect_agent_from_response(response_text, original_input)
+        
+        return ChatResponse(message=response_text, session_id=session_id, agent_name=agent_name)
     
     except Exception as e:
         print(f"Chat error: {e}")

@@ -22,6 +22,7 @@ const ChatInputSchema = z.object({
 const ChatOutputSchema = z.object({
   message: z.string(),
   sessionId: z.string().optional(),
+  agentName: z.string().optional(),
 });
 
 /**
@@ -71,9 +72,28 @@ export async function chat(
 
     const result = await response.json();
     
+    // Use agent name from API response
+    const agentName = result.agent_name || 'Sales Agent';
+    const agentEmoji = {
+      'Sales Agent': '🛒',
+      'Loyalty Agent': '🎁',
+      'Inventory Agent': '📦',
+      'Payment Agent': '💳',
+      'Fulfillment Agent': '🚚',
+      'Post-Purchase Agent': '🔄',
+      'Recommendation Agent': '🔍',
+    }[agentName] || '🛒';
+    
+    // Prepend agent tag if not already present
+    let messageWithAgent = result.message || "I'm here to help! What are you looking for?";
+    if (!messageWithAgent.includes('**[')) {
+      messageWithAgent = `${agentEmoji} **[${agentName}]** ${messageWithAgent}`;
+    }
+    
     return { 
-      message: result.message || "🛒 **[Sales Agent]** I'm here to help! What are you looking for?",
+      message: messageWithAgent,
       sessionId: result.session_id,
+      agentName: agentName,
     };
   } catch (error) {
     console.error('Chat error:', error);

@@ -464,36 +464,405 @@ PROMOTIONS = [
 ]
 
 
-# Category-specific image keywords for Unsplash
-CATEGORY_IMAGE_KEYWORDS = {
-    "Electronics": ["electronics", "gadget", "technology", "smartphone", "laptop", "headphones", "camera", "tv"],
-    "Home & Kitchen": ["kitchen", "home-appliance", "cookware", "furniture", "home-decor", "bedding"],
-    "Clothing - Men": ["mens-fashion", "shirt", "jacket", "menswear", "suit", "casual-wear"],
-    "Clothing - Women": ["womens-fashion", "dress", "saree", "kurti", "blouse", "ethnic-wear"],
-    "Footwear": ["shoes", "sneakers", "boots", "sandals", "footwear", "heels"],
-    "Beauty & Personal Care": ["cosmetics", "skincare", "beauty", "makeup", "perfume", "haircare"],
-    "Grocery & Gourmet": ["groceries", "spices", "food", "cooking", "ingredients", "pantry"],
-    "Sports & Fitness": ["sports", "fitness", "gym", "exercise", "yoga", "cycling"],
-    "Toys & Baby": ["toys", "baby", "kids", "games", "puzzles", "teddy-bear"],
-    "Automotive": ["car-accessories", "automotive", "bike", "helmet", "car-interior"],
-    "Mobile Accessories": ["phone-accessories", "charger", "earphones", "power-bank", "phone-case"],
-    "Books & Stationery": ["books", "stationery", "notebook", "pen", "office-supplies", "backpack"]
+# Category-specific image URLs using free image services
+# Using Unsplash direct links and placeholder services with keywords
+PRODUCT_IMAGES = {
+    # Electronics - TVs
+    "tv": [
+        "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1567690187548-f07b1d7bf5a9?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1461151304267-38535e780c79?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1509281373149-e957c6296406?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Phones
+    "smartphone": [
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1605236453806-6ff36851218e?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Laptops
+    "laptop": [
+        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Headphones/Earbuds
+    "earbuds": [
+        "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1572536147248-ac59a8abfa4b?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop",
+    ],
+    "headphones": [
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Speakers
+    "speaker": [
+        "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Tablets
+    "tablet": [
+        "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1561154464-82e9adf32764?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1585790050230-5dd28404ccb9?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Camera
+    "camera": [
+        "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Smartwatch
+    "smartwatch": [
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=800&h=800&fit=crop",
+    ],
+    # Electronics - Monitor
+    "monitor": [
+        "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1586210579191-33b45e38fa2c?w=800&h=800&fit=crop",
+    ],
+    # Home & Kitchen - Cookware
+    "cookware": [
+        "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1584990347449-a6e4c2e3c6e4?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1585837146751-a44118595630?w=800&h=800&fit=crop",
+    ],
+    # Home & Kitchen - Appliances
+    "mixer": [
+        "https://images.unsplash.com/photo-1570222094114-d054a817e56b?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=800&h=800&fit=crop",
+    ],
+    "microwave": [
+        "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?w=800&h=800&fit=crop",
+    ],
+    "vacuum": [
+        "https://images.unsplash.com/photo-1558317374-067fb5f30001?w=800&h=800&fit=crop",
+    ],
+    # Clothing - Men
+    "shirt": [
+        "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800&h=800&fit=crop",
+    ],
+    "tshirt": [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=800&h=800&fit=crop",
+    ],
+    "jeans": [
+        "https://images.unsplash.com/photo-1542272604-787c3835535d?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1582552938357-32b906df40cb?w=800&h=800&fit=crop",
+    ],
+    "jacket": [
+        "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=800&h=800&fit=crop",
+    ],
+    "kurta": [
+        "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&h=800&fit=crop",
+    ],
+    "blazer": [
+        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=800&h=800&fit=crop",
+    ],
+    # Clothing - Women
+    "saree": [
+        "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=800&h=800&fit=crop",
+    ],
+    "kurti": [
+        "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=800&h=800&fit=crop",
+    ],
+    "dress": [
+        "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&h=800&fit=crop",
+    ],
+    # Footwear
+    "shoes": [
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=800&h=800&fit=crop",
+    ],
+    "sneakers": [
+        "https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=800&h=800&fit=crop",
+    ],
+    "sandals": [
+        "https://images.unsplash.com/photo-1603487742131-4160ec999306?w=800&h=800&fit=crop",
+    ],
+    "heels": [
+        "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=800&h=800&fit=crop",
+    ],
+    "boots": [
+        "https://images.unsplash.com/photo-1542840410-3092f6d1e7b6?w=800&h=800&fit=crop",
+    ],
+    # Beauty
+    "cosmetics": [
+        "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=800&h=800&fit=crop",
+    ],
+    "skincare": [
+        "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1570194065650-d99fb4abbd90?w=800&h=800&fit=crop",
+    ],
+    "perfume": [
+        "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&h=800&fit=crop",
+    ],
+    "shampoo": [
+        "https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=800&h=800&fit=crop",
+    ],
+    # Grocery
+    "grocery": [
+        "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1608686207856-001b95cf60ca?w=800&h=800&fit=crop",
+    ],
+    "spices": [
+        "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=800&h=800&fit=crop",
+    ],
+    "rice": [
+        "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&h=800&fit=crop",
+    ],
+    "tea": [
+        "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?w=800&h=800&fit=crop",
+    ],
+    "coffee": [
+        "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800&h=800&fit=crop",
+    ],
+    # Sports
+    "cricket": [
+        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=800&fit=crop",
+    ],
+    "football": [
+        "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800&h=800&fit=crop",
+    ],
+    "yoga": [
+        "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=800&fit=crop",
+    ],
+    "gym": [
+        "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=800&fit=crop",
+    ],
+    "dumbbell": [
+        "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=800&h=800&fit=crop",
+    ],
+    # Toys & Baby
+    "toys": [
+        "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&h=800&fit=crop",
+    ],
+    "baby": [
+        "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&h=800&fit=crop",
+    ],
+    # Automotive
+    "car": [
+        "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=800&h=800&fit=crop",
+    ],
+    "bike": [
+        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=800&fit=crop",
+    ],
+    # Books
+    "books": [
+        "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&h=800&fit=crop",
+    ],
+    "notebook": [
+        "https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&h=800&fit=crop",
+    ],
+    "pen": [
+        "https://images.unsplash.com/photo-1585336261022-680e295ce3fe?w=800&h=800&fit=crop",
+    ],
+    "bag": [
+        "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800&h=800&fit=crop",
+        "https://images.unsplash.com/photo-1622560480654-d96214fdc887?w=800&h=800&fit=crop",
+    ],
+    # Mobile Accessories
+    "charger": [
+        "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&h=800&fit=crop",
+    ],
+    "powerbank": [
+        "https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=800&h=800&fit=crop",
+    ],
+    "case": [
+        "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&h=800&fit=crop",
+    ],
+}
+
+# Category fallback images
+CATEGORY_FALLBACK_IMAGES = {
+    "Electronics": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=800&fit=crop",
+    "Home & Kitchen": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=800&fit=crop",
+    "Clothing - Men": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&h=800&fit=crop",
+    "Clothing - Women": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&h=800&fit=crop",
+    "Footwear": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&h=800&fit=crop",
+    "Beauty & Personal Care": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800&h=800&fit=crop",
+    "Grocery & Gourmet": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&h=800&fit=crop",
+    "Sports & Fitness": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&h=800&fit=crop",
+    "Toys & Baby": "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=800&h=800&fit=crop",
+    "Automotive": "https://images.unsplash.com/photo-1489824904134-891ab64532f1?w=800&h=800&fit=crop",
+    "Mobile Accessories": "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&h=800&fit=crop",
+    "Books & Stationery": "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=800&h=800&fit=crop",
 }
 
 
-def generate_product_images(category: str, sku_num: int) -> list:
-    """Generate product images using Lorem Picsum (reliable placeholder service)"""
-    # Generate 2-4 unique images per product
-    num_images = random.choice([2, 3, 3, 4])
-    images = []
+def get_product_image_keyword(product_name: str) -> str:
+    """Extract keyword from product name to find matching images"""
+    product_lower = product_name.lower()
     
-    for i in range(num_images):
-        # Use unique seed based on SKU and image index for consistent images
-        seed = sku_num * 10 + i
-        # Use Lorem Picsum for reliable placeholder images
-        images.append(f"https://picsum.photos/seed/{seed}/800/800")
+    # TV and display products
+    if any(w in product_lower for w in ["tv", "led", "oled", "qled", "android tv"]):
+        return "tv"
+    # Phones
+    if any(w in product_lower for w in ["smartphone", "phone", "5g", "mobile"]):
+        return "smartphone"
+    # Laptops
+    if any(w in product_lower for w in ["laptop", "chromebook", "ultrabook", "notebook pc"]):
+        return "laptop"
+    # Earbuds and headphones
+    if any(w in product_lower for w in ["earbuds", "tws", "neckband"]):
+        return "earbuds"
+    if any(w in product_lower for w in ["headphone", "over-ear", "gaming headset"]):
+        return "headphones"
+    # Speakers
+    if any(w in product_lower for w in ["speaker", "soundbar", "home theatre"]):
+        return "speaker"
+    # Tablets
+    if any(w in product_lower for w in ["tablet", "e-reader", "ipad"]):
+        return "tablet"
+    # Camera
+    if any(w in product_lower for w in ["camera", "dslr", "webcam", "dash cam"]):
+        return "camera"
+    # Smartwatch
+    if any(w in product_lower for w in ["smartwatch", "fitness band", "watch"]):
+        return "smartwatch"
+    # Monitor
+    if any(w in product_lower for w in ["monitor", "curved"]):
+        return "monitor"
+    # Kitchen appliances
+    if any(w in product_lower for w in ["mixer", "grinder", "blender", "juicer"]):
+        return "mixer"
+    if any(w in product_lower for w in ["microwave", "otg", "oven"]):
+        return "microwave"
+    if any(w in product_lower for w in ["vacuum", "mop"]):
+        return "vacuum"
+    if any(w in product_lower for w in ["tawa", "kadhai", "cooker", "cookware", "pot", "pan"]):
+        return "cookware"
+    # Men's clothing
+    if any(w in product_lower for w in ["t-shirt", "tshirt"]):
+        return "tshirt"
+    if any(w in product_lower for w in ["shirt", "formal shirt"]):
+        return "shirt"
+    if any(w in product_lower for w in ["jeans", "denim", "trousers", "pants", "chinos"]):
+        return "jeans"
+    if any(w in product_lower for w in ["jacket", "windcheater", "puffer"]):
+        return "jacket"
+    if any(w in product_lower for w in ["kurta", "sherwani", "nehru", "pathani"]):
+        return "kurta"
+    if any(w in product_lower for w in ["blazer", "suit"]):
+        return "blazer"
+    # Women's clothing
+    if "saree" in product_lower:
+        return "saree"
+    if "kurti" in product_lower:
+        return "kurti"
+    if any(w in product_lower for w in ["dress", "gown", "maxi", "midi"]):
+        return "dress"
+    # Footwear
+    if any(w in product_lower for w in ["sneakers", "canvas shoes"]):
+        return "sneakers"
+    if any(w in product_lower for w in ["sandals", "floaters", "flip flops", "chappal"]):
+        return "sandals"
+    if any(w in product_lower for w in ["heels", "stiletto", "wedges"]):
+        return "heels"
+    if any(w in product_lower for w in ["boots", "ankle boots"]):
+        return "boots"
+    if any(w in product_lower for w in ["shoes", "loafers", "formal shoes", "running", "walking", "sports"]):
+        return "shoes"
+    # Beauty
+    if any(w in product_lower for w in ["lipstick", "foundation", "mascara", "makeup", "eyeliner", "kajal"]):
+        return "cosmetics"
+    if any(w in product_lower for w in ["cream", "serum", "face wash", "moisturizer", "sunscreen", "lotion"]):
+        return "skincare"
+    if any(w in product_lower for w in ["perfume", "deo", "attar", "fragrance"]):
+        return "perfume"
+    if any(w in product_lower for w in ["shampoo", "conditioner", "hair"]):
+        return "shampoo"
+    # Grocery
+    if any(w in product_lower for w in ["rice", "basmati", "dal", "flour", "atta"]):
+        return "rice"
+    if any(w in product_lower for w in ["spice", "masala", "turmeric", "cumin"]):
+        return "spices"
+    if any(w in product_lower for w in ["tea", "chai"]):
+        return "tea"
+    if any(w in product_lower for w in ["coffee"]):
+        return "coffee"
+    # Sports
+    if any(w in product_lower for w in ["cricket", "bat", "ball"]):
+        return "cricket"
+    if any(w in product_lower for w in ["football", "soccer"]):
+        return "football"
+    if any(w in product_lower for w in ["yoga", "mat"]):
+        return "yoga"
+    if any(w in product_lower for w in ["dumbbell", "weight", "barbell"]):
+        return "dumbbell"
+    if any(w in product_lower for w in ["gym", "fitness", "exercise"]):
+        return "gym"
+    # Toys
+    if any(w in product_lower for w in ["toy", "lego", "puzzle", "game", "teddy", "doll", "car toy"]):
+        return "toys"
+    if any(w in product_lower for w in ["diaper", "baby", "bottle", "stroller"]):
+        return "baby"
+    # Automotive
+    if any(w in product_lower for w in ["car", "seat cover", "dash"]):
+        return "car"
+    if any(w in product_lower for w in ["bike", "helmet", "motorcycle"]):
+        return "bike"
+    # Books & Stationery
+    if any(w in product_lower for w in ["book", "novel", "textbook", "ncert"]):
+        return "books"
+    if any(w in product_lower for w in ["notebook", "diary", "journal", "register"]):
+        return "notebook"
+    if any(w in product_lower for w in ["pen", "pencil", "marker", "highlighter"]):
+        return "pen"
+    if any(w in product_lower for w in ["bag", "backpack", "sling"]):
+        return "bag"
+    # Mobile Accessories
+    if any(w in product_lower for w in ["charger", "adapter", "cable"]):
+        return "charger"
+    if any(w in product_lower for w in ["power bank", "powerbank"]):
+        return "powerbank"
+    if any(w in product_lower for w in ["case", "cover", "protector"]):
+        return "case"
     
-    return images
+    return None
+
+
+def generate_product_images(product_name: str, category: str, sku_num: int) -> list:
+    """Generate product-specific images using Unsplash"""
+    # Try to find matching product images
+    keyword = get_product_image_keyword(product_name)
+    
+    if keyword and keyword in PRODUCT_IMAGES:
+        images = PRODUCT_IMAGES[keyword].copy()
+        random.shuffle(images)
+        # Return 1 to min(4, len) images
+        num_images = min(len(images), random.randint(1, min(4, len(images))))
+        return images[:max(1, num_images)]
+    
+    # Fallback to category image
+    fallback = CATEGORY_FALLBACK_IMAGES.get(category, 
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=800&fit=crop")
+    
+    return [fallback]
 
 
 def generate_products():
@@ -533,8 +902,8 @@ def generate_products():
                 
                 sku = f"IND{sku_num}"
                 
-                # Generate product images
-                images = generate_product_images(category, sku_num)
+                # Generate product-specific images based on product name
+                images = generate_product_images(name, category, sku_num)
                 
                 sku_num += 1
                 

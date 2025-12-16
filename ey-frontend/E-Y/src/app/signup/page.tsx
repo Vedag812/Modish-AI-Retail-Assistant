@@ -29,6 +29,15 @@ export default function SignupPage() {
     if (emailParam) {
       setEmail(emailParam);
     }
+    
+    // Try to get location from localStorage
+    const storedLocation = localStorage.getItem('userLocation');
+    if (storedLocation) {
+      try {
+        const loc = JSON.parse(storedLocation);
+        setLocation(`${loc.city}, ${loc.state}`);
+      } catch (e) {}
+    }
   }, [searchParams]);
 
   const handleSignUp = async (e: React.FormEvent) => {

@@ -464,6 +464,38 @@ PROMOTIONS = [
 ]
 
 
+# Category-specific image keywords for Unsplash
+CATEGORY_IMAGE_KEYWORDS = {
+    "Electronics": ["electronics", "gadget", "technology", "smartphone", "laptop", "headphones", "camera", "tv"],
+    "Home & Kitchen": ["kitchen", "home-appliance", "cookware", "furniture", "home-decor", "bedding"],
+    "Clothing - Men": ["mens-fashion", "shirt", "jacket", "menswear", "suit", "casual-wear"],
+    "Clothing - Women": ["womens-fashion", "dress", "saree", "kurti", "blouse", "ethnic-wear"],
+    "Footwear": ["shoes", "sneakers", "boots", "sandals", "footwear", "heels"],
+    "Beauty & Personal Care": ["cosmetics", "skincare", "beauty", "makeup", "perfume", "haircare"],
+    "Grocery & Gourmet": ["groceries", "spices", "food", "cooking", "ingredients", "pantry"],
+    "Sports & Fitness": ["sports", "fitness", "gym", "exercise", "yoga", "cycling"],
+    "Toys & Baby": ["toys", "baby", "kids", "games", "puzzles", "teddy-bear"],
+    "Automotive": ["car-accessories", "automotive", "bike", "helmet", "car-interior"],
+    "Mobile Accessories": ["phone-accessories", "charger", "earphones", "power-bank", "phone-case"],
+    "Books & Stationery": ["books", "stationery", "notebook", "pen", "office-supplies", "backpack"]
+}
+
+
+def generate_product_images(category: str, sku_num: int) -> list:
+    """Generate product images using Lorem Picsum (reliable placeholder service)"""
+    # Generate 2-4 unique images per product
+    num_images = random.choice([2, 3, 3, 4])
+    images = []
+    
+    for i in range(num_images):
+        # Use unique seed based on SKU and image index for consistent images
+        seed = sku_num * 10 + i
+        # Use Lorem Picsum for reliable placeholder images
+        images.append(f"https://picsum.photos/seed/{seed}/800/800")
+    
+    return images
+
+
 def generate_products():
     """Generate 1200+ products balanced across categories"""
     products = []
@@ -500,6 +532,10 @@ def generate_products():
                 reviews = random.randint(10, 15000)
                 
                 sku = f"IND{sku_num}"
+                
+                # Generate product images
+                images = generate_product_images(category, sku_num)
+                
                 sku_num += 1
                 
                 products.append({
@@ -508,7 +544,9 @@ def generate_products():
                     "category": category,
                     "current_price": max(price, min_p),
                     "rating": rating,
-                    "reviews_count": reviews
+                    "reviews_count": reviews,
+                    "images": images,
+                    "brand": brand
                 })
                 count += 1
     

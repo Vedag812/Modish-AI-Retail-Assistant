@@ -3,15 +3,23 @@
 'use client';
 
 import { useCart } from '@/hooks/use-cart';
+import { useCustomer } from '@/context/customer-context';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ScrollArea } from './ui/scroll-area';
 import { SheetFooter, SheetClose } from './ui/sheet';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Truck, Gift, Zap } from 'lucide-react';
+
+const FREE_SHIPPING_THRESHOLD = 999;
 
 export function CartSheet() {
   const { items, removeItem, updateQuantity, totalItems, totalPrice } = useCart();
+  const { customer, isAuthenticated } = useCustomer();
+  
+  const amountForFreeShipping = FREE_SHIPPING_THRESHOLD - totalPrice;
+  const qualifiesForFreeShipping = totalPrice >= FREE_SHIPPING_THRESHOLD;
+  const loyaltyPointsValue = customer?.loyalty_points ? Math.floor(customer.loyalty_points / 10) : 0;
 
   return (
     <div className="h-full flex flex-col">
@@ -63,6 +71,34 @@ export function CartSheet() {
               })}
             </div>
           </ScrollArea>
+          
+          {/* Smart Savings Mini Section */}
+          <div className="border-t pt-3 pb-2 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Zap className="h-3 w-3 text-primary" />
+              <span>Smart Savings</span>
+            </div>
+            
+            {!qualifiesForFreeShipping ? (
+              <div className="flex items-center gap-2 text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-2 rounded-md">
+                <Truck className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Add ₹{amountForFreeShipping.toFixed(0)} more for FREE shipping!</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-2 rounded-md">
+                <Truck className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>🎉 You get FREE shipping!</span>
+              </div>
+            )}
+            
+            {isAuthenticated && loyaltyPointsValue >= 10 && (
+              <div className="flex items-center gap-2 text-xs bg-pink-50 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300 p-2 rounded-md">
+                <Gift className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Use {customer?.loyalty_points} points for ₹{loyaltyPointsValue} off!</span>
+              </div>
+            )}
+          </div>
+          
           <SheetFooter className="mt-auto border-t pt-4">
             <div className="w-full space-y-4">
               <div className="flex justify-between font-semibold">

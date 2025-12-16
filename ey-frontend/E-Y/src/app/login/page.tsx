@@ -45,7 +45,6 @@ export default function LoginPage() {
         const redirectUrl = searchParams.get('redirect') || '/';
         router.push(redirectUrl);
       } else if (result.isNewUser) {
-        // Redirect to signup with email pre-filled
         toast({
           title: 'Account Not Found',
           description: 'Redirecting you to sign up...',

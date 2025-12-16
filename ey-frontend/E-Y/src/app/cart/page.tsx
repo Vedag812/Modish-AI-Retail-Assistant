@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Minus, Plus, Trash2 } from 'lucide-react';
+import { CartOptimizer } from '@/components/cart-optimizer';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, totalItems, totalPrice } = useCart();
@@ -81,7 +82,10 @@ export default function CartPage() {
                 </div>
             </div>
             <div>
-                <Card>
+                {/* Cart Optimizer - Smart Savings Suggestions */}
+                <CartOptimizer />
+                
+                <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Order Summary</CardTitle>
                     </CardHeader>

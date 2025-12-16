@@ -26,10 +26,6 @@ wheels/
 # Environment
 .env
 .venv
-firebase-service-account.json
-firebase-credentials*.json
-__MACOSX/
-._*
 
 # Database
 *.db
@@ -51,3 +47,19 @@ Thumbs.db
 data/*.db
 logs/
 *.log
+
+# Sensitive files - NEVER commit these
+firebase-service-account.json
+*-service-account.json
+*.pem
+*.key
+
+# Unrelated/temporary files
+convert_html_to_word.py
+Literature_Review_AI_Financial_Modeling.docx
+*.docx
+
+# Test files
+test_*.py
+check_*.py
+show_*.py

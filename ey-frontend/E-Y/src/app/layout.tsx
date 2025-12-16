@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Bot } from 'lucide-react';
 import Head from 'next/head';
 import Script from 'next/script';
+import { LocationPopup } from '@/components/location-popup';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -56,6 +57,7 @@ export default function RootLayout({
             </CartProvider>
           </CustomerProvider>
         </FirebaseClientProvider>
+        <LocationPopup />
         <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" />
       </body>
     </html>

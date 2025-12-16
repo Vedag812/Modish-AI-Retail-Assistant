@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { collection, query, where, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import type { Customer } from '@/lib/types';
 
@@ -89,7 +89,6 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
           message: `Welcome back, ${existingCustomer.name}!` 
         };
       } else {
-        // Customer not found
         return { 
           success: false, 
           isNewUser: true, 
@@ -129,11 +128,11 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
       // Generate new customer ID
       const customersRef = collection(firestore, 'customers');
       const snapshot = await getDocs(customersRef);
-      const maxId = snapshot.docs.reduce((max, doc) => {
-        const id = doc.data().customer_id || '';
+      const maxId = snapshot.docs.reduce((max, docSnap) => {
+        const id = docSnap.data().customer_id || '';
         const num = parseInt(id.replace('CUST', ''), 10);
         return isNaN(num) ? max : Math.max(max, num);
-      }, 2032); // Start after existing customers
+      }, 2032);
 
       const newCustomerId = `CUST${maxId + 1}`;
 
@@ -148,7 +147,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         loyalty_points: 100, // Welcome bonus
       };
 
-      // Use customer_id as document ID (like existing customers CUST2001, etc.)
+      // Save to Firebase
       const customerDocRef = doc(firestore, 'customers', newCustomerId);
       await setDoc(customerDocRef, {
         ...newCustomer,

@@ -7,11 +7,21 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, Loader2, ShoppingCart, Package, CreditCard, Truck, Gift, RotateCcw, Crown, LogIn } from 'lucide-react';
+import { Send, Bot, User, Loader2, ShoppingCart, Package, CreditCard, Truck, Gift, RotateCcw, Crown, LogIn, Tv, Shirt, Smartphone, Search, Tag, ClipboardList } from 'lucide-react';
 import { chat } from '@/ai/flows/chat';
 import type { ChatMessage } from '@/ai/flows/types';
 import { useCustomer } from '@/context/customer-context';
 import Link from 'next/link';
+
+// Quick reply suggestions
+const QUICK_REPLIES = [
+  { id: 'tvs', label: '📺 Show TVs', message: 'Show me smart TVs', icon: Tv },
+  { id: 'fashion', label: '👕 Fashion', message: 'Show me clothing options', icon: Shirt },
+  { id: 'electronics', label: '📱 Electronics', message: 'Show me electronics', icon: Smartphone },
+  { id: 'search', label: '🔍 Search Products', message: 'Help me search for products', icon: Search },
+  { id: 'promo', label: '🏷️ Apply Promo', message: 'What promo codes are available?', icon: Tag },
+  { id: 'track', label: '📦 Track Order', message: 'Track my order status', icon: ClipboardList },
+];
 
 // Agent configuration with colors and icons
 const AGENTS = {
@@ -156,18 +166,27 @@ export default function ChatbotPage() {
   
   const getWelcomeMessage = (cust?: typeof customer) => {
     if (cust) {
-      return `🛒 **[Sales Agent]** Welcome back, ${cust.name}! 🎉\n\n` +
-        `💎 **Your Loyalty Status:** ${cust.loyalty_tier} (${cust.loyalty_points} points)\n\n` +
-        `I'm your AI shopping assistant powered by 6 specialized agents:\n\n` +
-        `🔍 **Recommendation Agent** - Find perfect products for you\n` +
-        `📦 **Inventory Agent** - Check stock & reserve items\n` +
-        `💳 **Payment Agent** - Process payments via Razorpay\n` +
-        `🚚 **Fulfillment Agent** - Schedule deliveries\n` +
-        `🎁 **Loyalty Agent** - Manage your ${cust.loyalty_points} loyalty points\n` +
-        `🔄 **Post-Purchase Agent** - Handle returns & support\n\n` +
-        `How can I help you today?`;
+      return `🛒 Welcome back, **${cust.name}**! 🎉\n\n` +
+        `💎 **Your Loyalty Status:** ${cust.loyalty_tier} tier with ${cust.loyalty_points} points\n\n` +
+        `I'm here to help you find the perfect products, check availability, process payments, and manage your orders. Whether you're looking for electronics, fashion, groceries, or anything else - I've got you covered!\n\n` +
+        `**What would you like to do today?**\n` +
+        `• Browse products by category\n` +
+        `• Search for specific items\n` +
+        `• Check order status\n` +
+        `• Apply loyalty rewards & promo codes\n\n` +
+        `Just tell me what you need! 😊`;
     }
-    return '🛒 **[Sales Agent]** Hello! I\'m your AI shopping assistant powered by 6 specialized agents:\n\n🔍 **Recommendation Agent** - Find perfect products\n📦 **Inventory Agent** - Check stock & reserve items\n💳 **Payment Agent** - Process payments via Razorpay\n🚚 **Fulfillment Agent** - Schedule deliveries\n🎁 **Loyalty Agent** - Manage rewards & registration\n🔄 **Post-Purchase Agent** - Handle returns & support\n\nHow can I help you today?';
+    return `👋 **Hello! Welcome to our store!**\n\n` +
+      `I'm your AI shopping assistant, ready to help you find exactly what you're looking for. From electronics to fashion, groceries to home essentials - we have it all!\n\n` +
+      `**Here's what I can do for you:**\n` +
+      `• 🔍 Find & recommend products based on your needs\n` +
+      `• 📦 Check stock availability across warehouses\n` +
+      `• 💳 Process secure payments via Razorpay\n` +
+      `• 🚚 Schedule delivery to your location\n` +
+      `• 🎁 Help you earn & redeem loyalty rewards\n` +
+      `• 🔄 Assist with returns and exchanges\n\n` +
+      `**New customer?** I can help you register and get 100 bonus loyalty points!\n\n` +
+      `How can I assist you today? 😊`;
   };
 
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -215,8 +234,13 @@ export default function ChatbotPage() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+    await sendMessage(input);
+  };
 
-    const userMessage: ChatMessage = { role: 'user', content: input };
+  const sendMessage = async (messageText: string) => {
+    if (!messageText.trim() || isLoading) return;
+
+    const userMessage: ChatMessage = { role: 'user', content: messageText };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
@@ -249,13 +273,17 @@ export default function ChatbotPage() {
     }
   };
 
+  const handleQuickReply = (message: string) => {
+    sendMessage(message);
+  };
+
   const handleNewChat = () => {
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     localStorage.setItem('chatSessionId', newSessionId);
     setSessionId(newSessionId);
     const welcomeText = isAuthenticated && customer 
-      ? `🛒 **[Sales Agent]** Hello ${customer.name}! Starting a fresh conversation. How can I help you today?`
-      : '🛒 **[Sales Agent]** Hello! Starting a fresh conversation. How can I help you today?';
+      ? `👋 Hello ${customer.name}! Ready to start fresh? What can I help you find today?`
+      : '👋 Hello! Starting a new conversation. What can I help you with today?';
     setMessages([
       { role: 'model', content: welcomeText },
     ]);
@@ -271,7 +299,7 @@ export default function ChatbotPage() {
           </div>
           <div>
             <h2 className="font-semibold">AI Shopping Assistant</h2>
-            <p className="text-xs text-muted-foreground">Powered by 6 specialized agents</p>
+            <p className="text-xs text-muted-foreground">Your personal shopping companion</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={handleNewChat}>
@@ -307,6 +335,26 @@ export default function ChatbotPage() {
 
       {/* Input */}
       <div className="bg-card border rounded-b-xl p-4">
+        {/* Quick Reply Buttons */}
+        <div className="flex flex-wrap gap-2 mb-3">
+          {QUICK_REPLIES.map((reply) => {
+            const IconComponent = reply.icon;
+            return (
+              <Button
+                key={reply.id}
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickReply(reply.message)}
+                disabled={isLoading}
+                className="h-8 text-xs font-medium hover:bg-primary/10 hover:border-primary/50 transition-colors"
+              >
+                <IconComponent className="h-3.5 w-3.5 mr-1.5" />
+                {reply.label}
+              </Button>
+            );
+          })}
+        </div>
+
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <Input
             value={input}
@@ -326,7 +374,7 @@ export default function ChatbotPage() {
           </Button>
         </form>
         <p className="text-xs text-muted-foreground mt-2 text-center">
-          Try: "Show me smart TVs" • "I want to buy SKU IND1080" • "Register me as new customer"
+          Or type your own question above
         </p>
       </div>
     </div>

@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
 import asyncio
+import os
+from datetime import datetime
 
 # Initialize Firebase FIRST before importing agents
 from utils.firebase_db import get_db
@@ -119,10 +121,20 @@ async def chat_with_agent(request: ChatRequest):
     """
     try:
         # Get or create session
-        session_id = request.session_id or f"session_{len(active_sessions) + 1}"
+        session_id = request.session_id or f"session_{int(datetime.now().timestamp())}_{os.urandom(4).hex()}"
         
-        if session_id not in active_sessions:
-            # Create new ADK session
+        # Always ensure session exists in session_service (handles restarts)
+        try:
+            # Try to get existing session
+            existing_session = await session_service.get_session(
+                app_name="retail_sales_agent",
+                user_id=request.customer_id or "guest",
+                session_id=session_id
+            )
+            if not existing_session:
+                raise ValueError("Session not found")
+        except:
+            # Create new session if not found
             session = await session_service.create_session(
                 app_name="retail_sales_agent",
                 user_id=request.customer_id or "guest",

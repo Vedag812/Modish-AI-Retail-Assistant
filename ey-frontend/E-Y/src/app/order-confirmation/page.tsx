@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomer } from '@/context/customer-context';
 import { useFirestore } from '@/firebase';
@@ -69,7 +69,7 @@ interface Order {
   paymentStatus: 'pending' | 'completed' | 'failed' | 'paid';
 }
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const { customer, isAuthenticated } = useCustomer();
   const firestore = useFirestore();
   const router = useRouter();
@@ -468,5 +468,13 @@ export default function OrderConfirmationPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8 text-center">Loading order...</div>}>
+      <OrderConfirmationContent />
+    </Suspense>
   );
 }

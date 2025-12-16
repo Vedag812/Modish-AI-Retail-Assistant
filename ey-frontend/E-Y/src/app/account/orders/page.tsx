@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCustomer } from '@/context/customer-context';
 import { useFirestore } from '@/firebase';
@@ -95,7 +95,7 @@ function getStatusBadge(status: string) {
   }
 }
 
-export default function OrdersPage() {
+function OrdersContent() {
   const { customer, isLoading: isCustomerLoading, isAuthenticated } = useCustomer();
   const firestore = useFirestore();
   const router = useRouter();
@@ -302,5 +302,13 @@ export default function OrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8"><OrderSkeleton /></div>}>
+      <OrdersContent />
+    </Suspense>
   );
 }

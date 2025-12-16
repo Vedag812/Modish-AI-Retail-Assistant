@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCustomer } from '@/context/customer-context';
 import { UserPlus, Loader2, ArrowRight, Gift } from 'lucide-react';
 
-export default function SignupPage() {
+function SignupContent() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -178,5 +178,13 @@ export default function SignupPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-200px)]">Loading...</div>}>
+      <SignupContent />
+    </Suspense>
   );
 }

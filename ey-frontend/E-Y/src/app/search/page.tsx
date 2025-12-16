@@ -4,7 +4,7 @@
 import { useSearchParams } from 'next/navigation';
 import { ProductCard } from '@/components/product-card';
 import { Input } from '@/components/ui/input';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import type { Product } from '@/lib/types';
@@ -24,7 +24,7 @@ function SearchGridSkeleton() {
   )
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const [searchTerm, setSearchTerm] = useState(initialQuery);
@@ -113,5 +113,13 @@ export default function SearchPage() {
           )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8"><SearchGridSkeleton /></div>}>
+      <SearchContent />
+    </Suspense>
   );
 }

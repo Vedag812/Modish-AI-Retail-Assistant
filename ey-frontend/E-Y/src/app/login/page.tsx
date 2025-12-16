@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCustomer } from '@/context/customer-context';
 import { Mail, Loader2, ArrowRight, Sparkles } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -127,5 +127,13 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-200px)]">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

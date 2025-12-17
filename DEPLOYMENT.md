@@ -42,9 +42,9 @@ In Render dashboard, go to **"Environment"** tab and add:
 
 | Variable | Value |
 |----------|-------|
-| `GEMINI_API_KEY` | `AIzaSyDYgkvI5bp4DY6uy12GJRTBqSpzjf1-WFE` |
-| `RAZORPAY_KEY_ID` | `rzp_test_RnUJfj8QOYSc6i` |
-| `RAZORPAY_KEY_SECRET` | `Zez8aIEtQj7rzVeYPd7ljLoo` |
+| `GEMINI_API_KEY` | `your-gemini-api-key` |
+| `RAZORPAY_KEY_ID` | `your-razorpay-key-id` |
+| `RAZORPAY_KEY_SECRET` | `your-razorpay-key-secret` |
 | `DEFAULT_MODEL` | `gemini-2.5-flash` |
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | *(See step 1.4)* |
 
@@ -90,7 +90,7 @@ Add these environment variables:
 | Variable | Value |
 |----------|-------|
 | `NEXT_PUBLIC_API_URL` | `https://retail-sales-api.onrender.com` *(your Render URL)* |
-| `GOOGLE_GENAI_API_KEY` | `AIzaSyDYgkvI5bp4DY6uy12GJRTBqSpzjf1-WFE` |
+| `GOOGLE_GENAI_API_KEY` | `your-gemini-api-key` |
 
 ### 2.4 Deploy
 Click **"Deploy"** and wait (2-3 minutes).

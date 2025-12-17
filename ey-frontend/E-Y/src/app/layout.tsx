@@ -1,5 +1,5 @@
 
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
@@ -18,9 +18,25 @@ import { LocationPopup } from '@/components/location-popup';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#1a1a1a',
+};
+
 export const metadata: Metadata = {
-  title: 'E&Y',
-  description: 'A modern clothing e-commerce website.',
+  title: 'Modish - AI-Powered Fashion Store',
+  description: 'Discover 100+ curated fashion pieces for men & women. Get personalized style recommendations with AI voice assistant. Free shipping, easy returns, loyalty rewards.',
+  keywords: 'fashion, clothing, men fashion, women fashion, footwear, AI shopping, voice assistant, online shopping, India',
+  authors: [{ name: 'Modish' }],
+  manifest: '/manifest.json',
+  openGraph: {
+    title: 'Modish - AI-Powered Fashion Store',
+    description: 'Discover curated fashion with AI-powered recommendations and voice shopping.',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +47,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="format-detection" content="telephone=no" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />

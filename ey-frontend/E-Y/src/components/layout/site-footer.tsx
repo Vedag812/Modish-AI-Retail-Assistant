@@ -10,18 +10,18 @@ export function SiteFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
-                <span className="font-bold text-xl font-headline">RetailStore</span>
+                <span className="font-bold text-xl font-headline">Modish</span>
             </Link>
-            <p className="text-sm text-muted-foreground">Your one-stop shop for electronics and more.</p>
+            <p className="text-sm text-muted-foreground">Your one-stop shop for fashion and style.</p>
           </div>
 
           <div>
             <h3 className="font-semibold mb-4">Shop</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/shops/electronics" className="text-muted-foreground hover:text-primary">Electronics</Link></li>
-              <li><Link href="/shops/appliances" className="text-muted-foreground hover:text-primary">Appliances</Link></li>
-              <li><Link href="/shops/mobile" className="text-muted-foreground hover:text-primary">Mobile Phones</Link></li>
-              <li><Link href="/shops/accessories" className="text-muted-foreground hover:text-primary">Accessories</Link></li>
+              <li><Link href="/shops/men" className="text-muted-foreground hover:text-primary">Men's Fashion</Link></li>
+              <li><Link href="/shops/women" className="text-muted-foreground hover:text-primary">Women's Fashion</Link></li>
+              <li><Link href="/products?category=Footwear" className="text-muted-foreground hover:text-primary">Footwear</Link></li>
+              <li><Link href="/products" className="text-muted-foreground hover:text-primary">All Products</Link></li>
             </ul>
           </div>
           
@@ -45,7 +45,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} RetailStore. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Modish. All rights reserved.</p>
         </div>
       </div>
     </footer>

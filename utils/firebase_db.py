@@ -9,6 +9,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Import category filter from config
+try:
+    from config.config import is_allowed_category, ALLOWED_CATEGORIES
+except ImportError:
+    # Fallback if config not available
+    ALLOWED_CATEGORIES = None
+    def is_allowed_category(category):
+        return True
+
 # Firebase imports
 try:
     import firebase_admin
@@ -142,17 +151,32 @@ def get_all_customers(limit: int = 100) -> list:
 
 # ==================== PRODUCT FUNCTIONS ====================
 
-def get_all_products(limit: int = 100) -> list:
-    """Get all products from Firebase"""
+def get_all_products(limit: int = 100, filter_categories: bool = True) -> list:
+    """Get all products from Firebase
+    
+    Args:
+        limit: Maximum number of products to return
+        filter_categories: If True, only return products from allowed categories (clothing/fashion)
+    """
     try:
         db = get_db()
-        docs = db.collection('products').limit(limit).stream()
+        # Fetch more to account for filtering
+        fetch_limit = limit * 3 if filter_categories and ALLOWED_CATEGORIES else limit
+        docs = db.collection('products').limit(fetch_limit).stream()
         products = []
         for doc in docs:
             data = doc.to_dict()
             data['sku'] = doc.id
             data['id'] = doc.id  # Add id field for frontend compatibility
+            
+            # Apply category filter for fashion/clothing focus
+            if filter_categories and ALLOWED_CATEGORIES:
+                if not is_allowed_category(data.get('category', '')):
+                    continue
+            
             products.append(data)
+            if len(products) >= limit:
+                break
         return products
     except Exception as e:
         print(f"Error getting all products: {e}")
@@ -175,8 +199,17 @@ def get_product(sku: str) -> dict:
 
 
 def search_products(query: str = "", category: str = "", min_price: float = None, 
-                   max_price: float = None, limit: int = 10) -> list:
-    """Search products by name, category, price range"""
+                   max_price: float = None, limit: int = 10, filter_categories: bool = True) -> list:
+    """Search products by name, category, price range
+    
+    Args:
+        query: Search term for product name
+        category: Category filter
+        min_price: Minimum price filter
+        max_price: Maximum price filter
+        limit: Maximum results to return
+        filter_categories: If True, only search in allowed categories (clothing/fashion)
+    """
     try:
         db = get_db()
         products_ref = db.collection('products')
@@ -194,6 +227,11 @@ def search_products(query: str = "", category: str = "", min_price: float = None
         for doc in docs:
             data = doc.to_dict()
             data['sku'] = doc.id
+            
+            # Apply category filter for fashion/clothing focus
+            if filter_categories and ALLOWED_CATEGORIES:
+                if not is_allowed_category(data.get('category', '')):
+                    continue
             
             name_lower = data.get('name', '').lower()
             cat_lower = data.get('category', '').lower()

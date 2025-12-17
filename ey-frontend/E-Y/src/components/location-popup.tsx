@@ -28,61 +28,61 @@ interface StoreAddress {
 // City-based store addresses
 const CITY_STORES: Record<string, StoreAddress> = {
   'Mumbai': {
-    name: 'RetailStore - Andheri',
+    name: 'Modish - Andheri',
     address: 'Shop 12, Phoenix Marketcity, LBS Marg, Kurla West',
     landmark: 'Near Kurla Station',
     timing: '10:00 AM - 10:00 PM'
   },
   'Delhi': {
-    name: 'RetailStore - Connaught Place',
+    name: 'Modish - Connaught Place',
     address: 'Block A-23, Inner Circle, Connaught Place',
     landmark: 'Near Rajiv Chowk Metro',
     timing: '10:00 AM - 9:00 PM'
   },
   'Bengaluru': {
-    name: 'RetailStore - Koramangala',
+    name: 'Modish - Koramangala',
     address: '80 Feet Road, 4th Block, Koramangala',
     landmark: 'Near Forum Mall',
     timing: '10:00 AM - 10:00 PM'
   },
   'Chennai': {
-    name: 'RetailStore - T Nagar',
+    name: 'Modish - T Nagar',
     address: '45, Usman Road, T Nagar',
     landmark: 'Near Panagal Park',
     timing: '10:00 AM - 9:30 PM'
   },
   'Hyderabad': {
-    name: 'RetailStore - Banjara Hills',
+    name: 'Modish - Banjara Hills',
     address: 'Road No. 12, Banjara Hills',
     landmark: 'Near GVK One Mall',
     timing: '10:00 AM - 10:00 PM'
   },
   'Kolkata': {
-    name: 'RetailStore - Park Street',
+    name: 'Modish - Park Street',
     address: '22, Park Street',
     landmark: 'Near Park Street Metro',
     timing: '10:00 AM - 9:00 PM'
   },
   'Pune': {
-    name: 'RetailStore - FC Road',
+    name: 'Modish - FC Road',
     address: 'Shop 7, Fergusson College Road',
     landmark: 'Near Goodluck Cafe',
     timing: '10:00 AM - 9:30 PM'
   },
   'Ahmedabad': {
-    name: 'RetailStore - CG Road',
+    name: 'Modish - CG Road',
     address: 'Safal Profitaire, CG Road, Navrangpura',
     landmark: 'Near Swastik Cross Roads',
     timing: '10:00 AM - 9:00 PM'
   },
   'Jaipur': {
-    name: 'RetailStore - MI Road',
+    name: 'Modish - MI Road',
     address: '123, MI Road, C-Scheme',
     landmark: 'Near Raj Mandir Cinema',
     timing: '10:00 AM - 9:00 PM'
   },
   'Lucknow': {
-    name: 'RetailStore - Hazratganj',
+    name: 'Modish - Hazratganj',
     address: '56, Hazratganj Main Road',
     landmark: 'Near Sahara Ganj Mall',
     timing: '10:00 AM - 9:00 PM'
@@ -104,7 +104,7 @@ function getStoreForCity(city: string, state: string): StoreAddress {
   const randomArea = areas[Math.floor(Math.random() * areas.length)];
   
   return {
-    name: `RetailStore - ${city}`,
+    name: `Modish - ${city}`,
     address: `Shop 15, ${randomArea}, ${city}`,
     landmark: `Near ${randomLandmark}`,
     timing: '10:00 AM - 9:00 PM'

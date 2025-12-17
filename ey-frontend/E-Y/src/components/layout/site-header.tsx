@@ -216,11 +216,11 @@ export function SiteHeader() {
           <div className="flex w-1/4 items-center">
             <Link href="/" className="group flex items-center gap-2 shrink-0">
                 <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary via-primary/90 to-primary/80 shadow-md transition-transform group-hover:scale-105">
-                  <span className="text-xl font-black text-primary-foreground">R</span>
+                  <span className="text-xl font-black text-primary-foreground">M</span>
                   <div className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-yellow-400 shadow-sm animate-pulse" />
                 </div>
                 <span className="hidden sm:inline-block text-2xl font-bold font-headline tracking-wide bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                  RetailStore
+                  Modish
                 </span>
             </Link>
           </div>

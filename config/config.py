@@ -35,7 +35,7 @@ RETRY_DELAY = 1
 # Channel Types
 CHANNELS = ["web_chat", "mobile_app", "whatsapp", "telegram", "in_store_kiosk", "voice_assistant"]
 
-# Product Categories
+# Product Categories - All available
 PRODUCT_CATEGORIES = [
     "Electronics",
     "Clothing",
@@ -46,6 +46,29 @@ PRODUCT_CATEGORIES = [
     "Toys & Games",
     "Automotive"
 ]
+
+# ==================== FASHION/CLOTHING FILTER ====================
+# Only these categories will be displayed on the website and used by agents
+# Set to None or empty list to show all categories
+ALLOWED_CATEGORIES = [
+    "Clothing - Men",
+    "Clothing - Women",
+    "Footwear",
+]
+
+# Helper function to check if a category is allowed
+def is_allowed_category(category: str) -> bool:
+    """Check if a category is in the allowed list for fashion/clothing focus"""
+    if not ALLOWED_CATEGORIES:
+        return True  # If no filter, allow all
+    if not category:
+        return False
+    # Case-insensitive partial matching for flexibility
+    category_lower = category.lower()
+    for allowed in ALLOWED_CATEGORIES:
+        if allowed.lower() in category_lower or category_lower in allowed.lower():
+            return True
+    return False
 
 # Loyalty Tiers
 LOYALTY_TIERS = {

@@ -1,426 +1,76 @@
-# 🛒 Retail Sales Agent - AI Shopping Assistant
+# Modish AI - Multi-Agent Retail Assistant
 
-> **Multi-Agent AI System for Indian Retail Shopping with Google Gemini & Razorpay**
+An AI shopping assistant where 6 specialized agents work together to handle a complete retail transaction. You talk to the system in natural language, and behind the scenes, different agents handle product search, inventory checks, payments, delivery, loyalty points, and post-purchase support.
 
-An intelligent retail assistant powered by **6 specialized AI agents** that work together seamlessly to provide a complete shopping experience from product discovery to checkout and post-purchase support.
+Built this to learn Google's Agent Development Kit (ADK) and understand how multi-agent orchestration works in practice. The retail domain made sense because a shopping flow naturally breaks into distinct responsibilities.
 
----
+## The agents
 
-## 🌟 What is This?
-
-**Retail Sales Agent** is an AI-powered shopping assistant that uses **6 specialized agents** working together in perfect harmony. Instead of manually switching between different tools, you simply chat naturally, and the system automatically:
-
-- 🎯 Recommends products based on your needs
-- 📦 Checks real-time inventory across 5 Indian warehouse locations
-- 🎁 Applies loyalty discounts and promo codes
-- 💳 Processes payments via **Razorpay** (real payment links!)
-- 🚚 Arranges delivery or store pickup
-- 🌟 Handles returns, reviews, and support
-
-**Example Conversation:**
 ```
-You: I want running shoes under ₹5000
-
-AI:  🎯 Found 5 perfect options!
-     📦 All in stock at Mumbai, Delhi, Bengaluru warehouses
-     🎁 You're Gold tier - 15% off applied!
-     💳 Here's your Razorpay payment link: https://rzp.io/rzp/...
-     🚚 Estimated delivery: 3-5 days
+Sales Agent (orchestrator)
+├── Recommendation Agent  → Suggests products based on what you ask for
+├── Inventory Agent       → Checks stock availability and pricing
+├── Payment Agent         → Handles checkout and payment processing
+├── Fulfillment Agent     → Manages shipping and delivery tracking
+├── Loyalty Agent         → Tracks reward points, applies discounts
+└── Post-Purchase Agent   → Returns, exchanges, order status queries
 ```
 
-All in **one natural conversation** - no menus, no switching screens!
+The **Sales Agent** is the one you talk to. It figures out which worker agent to route your request to, collects the response, and gives you a unified answer. If your request touches multiple agents (e.g., "buy this red kurta and apply my loyalty points"), it orchestrates between them.
 
----
+## Example conversation
 
-## ✨ Key Features
+```
+You: "Show me cotton kurtas under 2000 rupees"
+→ Recommendation Agent searches the product catalog
+→ Inventory Agent checks stock for each suggestion
+→ Sales Agent combines both and responds with available options
 
-### 🤖 6 AI Agents Working Together
+You: "Buy the blue one, use my reward points"
+→ Inventory Agent reserves the item
+→ Loyalty Agent calculates point redemption
+→ Payment Agent processes the adjusted total
+→ Fulfillment Agent creates a shipping order
+```
 
-| Agent | What It Does |
-|-------|--------------|
-| **🎯 Recommendation** | Personalized product suggestions, bundles, seasonal deals |
-| **📦 Inventory** | Real-time stock checking across 5 Indian warehouses |
-| **🎁 Loyalty** | Automatic discounts (5%-20%), promo codes, points tracking |
-| **💳 Payment** | Razorpay payment links, saved cards, UPI |
-| **🚚 Fulfillment** | Same-day, express, standard delivery options |
-| **🌟 Support** | Returns, exchanges, order tracking, reviews |
+## How I built it
 
-### 🔗 Real Integrations
+The agents use **Google ADK** (Agent Development Kit) with **Gemini** as the underlying LLM. Each agent has:
+- A system prompt defining its role and tools
+- Python functions it can call (database queries, calculations, etc.)
+- Clear boundaries on what it should and shouldn't handle
 
-- ✅ **Google Gemini 2.0** - AI brain powering all agents
-- ✅ **Razorpay API** - Real payment links (test mode available)
-- ✅ **Firebase Firestore** - Cloud NoSQL database with 1200+ products
-- ✅ **Indian Product Catalog** - 1200+ products across 12 categories
-- ✅ **5 Indian Warehouses** - Mumbai, Delhi, Bengaluru, Chennai, Hyderabad
+The product catalog uses an Indian retail dataset - kurtas, sarees, electronics, etc. with prices in INR.
 
-### 📊 Database Overview
+## Tech
 
-| Item | Count |
-|------|-------|
-| **Products** | 1,200+ |
-| **Categories** | 12 |
-| **Warehouses** | 5 |
-| **Inventory Entries** | 6,000+ |
-| **Customers** | 32 |
+- **Agent framework**: Google ADK with InMemoryRunner
+- **LLM**: Google Gemini API
+- **Backend**: Python, Flask (api_server.py for the REST API)
+- **Frontend**: React app (ey-frontend/)
+- **Database**: SQLite with product catalog and order data
+- **Deployment configs**: Railway, Render, Procfile
 
-### 🏷️ Product Categories
-
-| Category | Products | Price Range |
-|----------|----------|-------------|
-| Electronics | 100 | ₹2,999 - ₹79,999 |
-| Home & Kitchen | 100 | ₹199 - ₹14,999 |
-| Clothing - Men | 100 | ₹299 - ₹4,999 |
-| Clothing - Women | 100 | ₹399 - ₹7,999 |
-| Footwear | 100 | ₹299 - ₹7,999 |
-| Beauty & Personal Care | 100 | ₹49 - ₹2,999 |
-| Grocery & Gourmet | 100 | ₹29 - ₹1,499 |
-| Sports & Fitness | 100 | ₹199 - ₹9,999 |
-| Toys & Baby | 100 | ₹149 - ₹4,999 |
-| Automotive | 100 | ₹149 - ₹14,999 |
-| Mobile Accessories | 100 | ₹99 - ₹3,999 |
-| Books & Stationery | 100 | ₹49 - ₹1,999 |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.11 or higher
-- Google Gemini API key ([Get free key](https://aistudio.google.com/apikey))
-- Git (for cloning)
-
-### Installation
+## Running it
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/Vedag812/Retail-Agent.git
-cd Retail-Agent
-
-# 2. Install dependencies
+# install dependencies
 pip install -r requirements.txt
 
-# 3. Create .env file with your API keys:
-GEMINI_API_KEY=your_gemini_api_key_here
-FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
-RAZORPAY_KEY_ID=rzp_test_xxxxx
-RAZORPAY_KEY_SECRET=your_razorpay_secret
+# set up env (needs a Google Gemini API key)
+cp .env.example .env
+# edit .env with your GOOGLE_API_KEY
 
-# 4. Setup Firebase:
-#    - Go to https://console.firebase.google.com/
-#    - Create a project and enable Firestore
-#    - Generate service account key (JSON)
-#    - Save as firebase-service-account.json
-
-# 5. Populate database (first time only):
-python data/populate_firebase.py
-```
-
-### Run the App
-
-```bash
+# run the CLI version
 python app.py
+
+# or run the API server + frontend
+python api_server.py
+cd ey-frontend && npm install && npm start
 ```
 
-That's it! The chatbot will start and all 6 agents will coordinate automatically.
+## What's interesting about multi-agent systems
 
----
+The tricky part isn't building individual agents - it's the orchestration. When should the sales agent delegate vs answer directly? How do you handle errors when one agent fails mid-transaction? What if two agents need the same data?
 
-## 📖 How to Use
-
-### Starting a Conversation
-
-```bash
-$ python app.py
-
-🛒 RETAIL SALES AGENT v1.0
-AI-Powered Shopping Assistant with 6 Agents
-
-👋 Hi! I'm your AI Shopping Assistant.
-💡 Try: 'I want running shoes under ₹5000' or 'Check my rewards'
-
-👤 You: _
-```
-
-### Example Queries
-
-**Product Search:**
-```
-"I want running shoes for marathons"
-"Show me laptops under ₹50000"
-"What sarees do you have?"
-"Find organic honey"
-```
-
-**Check Inventory:**
-```
-"Is this available in Mumbai?"
-"Do you have size 10 in stock?"
-"What warehouses have this product?"
-```
-
-**Loyalty & Discounts:**
-```
-"Check my rewards balance"
-"What's my loyalty tier?"
-"Apply promo code DIWALI20"
-```
-
-**Checkout:**
-```
-"I'll buy this"
-"Generate payment link"
-"I've completed the payment"
-```
-
-**Post-Purchase:**
-```
-"Where's my order?"
-"I want to return this"
-"Write a review for my recent purchase"
-```
-
----
-
-## 🧪 Testing
-
-### Run Automated E2E Test
-
-```bash
-python test_e2e_flow.py
-```
-
-This tests the complete flow:
-1. ✅ Search products
-2. ✅ Check inventory
-3. ✅ Create Razorpay payment link
-4. ✅ Confirm payment
-5. ✅ Schedule delivery
-6. ✅ Verify in database
-
-### Sample Output:
-```
-======================================================================
-  🛒 AUTOMATED E2E TEST - COMPLETE ORDER FLOW
-======================================================================
-
-👤 Customer: Neha Reddy (CUST2002)
-📍 Location: Bengaluru, Karnataka
-
-📍 STEP 1: SEARCH PRODUCTS
-   🔍 Searching for: 'honey'
-   ✅ Found 3 products
-
-📍 STEP 3: CREATE PAYMENT LINK (Razorpay)
-   📦 ORDER ID:      ORD257663
-   💳 Payment Link:  https://rzp.io/rzp/2tcV8HA
-   💰 Amount:        ₹1,998.00
-
-📍 STEP 5: CONFIRM PAYMENT
-   ✅ PAYMENT CONFIRMED!
-   📊 Status: PAID
-
-🎉 All steps completed successfully!
-```
-
-### Check Orders in Database
-
-```bash
-python check_orders.py
-```
-
-### Show All Products
-
-```bash
-python show_products.py
-```
-
----
-
-## 🛠️ Configuration
-
-### Required: Gemini API Key
-
-Get your free API key from [Google AI Studio](https://aistudio.google.com/apikey)
-
-```env
-GEMINI_API_KEY=your_key_here
-```
-
-### Required: Firebase Firestore
-
-Setup Firebase:
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create project → Enable Firestore Database
-3. Download service account key
-
-```env
-FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
-```
-
-### Optional: Razorpay Payments
-
-Get test keys from [Razorpay Dashboard](https://dashboard.razorpay.com):
-
-```env
-RAZORPAY_KEY_ID=rzp_test_xxxxx
-RAZORPAY_KEY_SECRET=your_secret
-```
-
----
-
-## 📁 Project Structure
-
-```
-retail_sales_agent/
-├── app.py                    # 👈 START HERE - Main application
-├── .env                      # API keys (create this)
-├── requirements.txt          # Dependencies
-│
-├── agents/
-│   ├── sales_agent/
-│   │   └── sales_agent.py   # Main orchestrator with direct payment tools
-│   └── worker_agents/       # 6 specialized agents
-│       ├── recommendation_agent.py
-│       ├── inventory_agent.py
-│       ├── loyalty_agent.py
-│       ├── payment_agent.py
-│       ├── fulfillment_agent.py
-│       └── post_purchase_agent.py
-│
-├── utils/
-│   ├── db.py                # Firebase wrapper (backwards compatible)
-│   ├── firebase_db.py       # Firebase Firestore connection
-│   └── tools/               # Agent tool functions
-│   │   ├── recommendation_tools.py
-│   │   ├── inventory_tools.py
-│   │   ├── payment_tools.py      # Razorpay integration
-│   │   ├── fulfillment_tools.py
-│   │   ├── loyalty_tools.py
-│   │   └── post_purchase_tools.py
-│   └── external_apis/
-│       └── inventory_api.py      # FakeStore + DummyJSON
-│
-├── data/
-│   ├── populate_1200_products.py # 1200+ Indian products
-│   └── populate_india_dataset.py # Indian customers & inventory
-│
-├── config/
-│   └── config.py            # Settings & configuration
-│
-└── tests/
-    ├── test_e2e_flow.py     # End-to-end automated test
-    ├── test_payment_flow.py  # Payment flow test
-    └── check_orders.py       # View orders in database
-```
-
----
-
-## 💳 Payment Flow
-
-### How Razorpay Integration Works
-
-1. **Customer selects product** → Agent creates order in Firebase
-2. **Payment link generated** → Real Razorpay URL (e.g., `https://rzp.io/rzp/xxx`)
-3. **Customer pays** → Click link, complete payment on Razorpay
-4. **Confirm payment** → Agent updates order status to "PAID"
-5. **Delivery scheduled** → Tracking ID generated
-
-### Order Flow Diagram
-
-```
-Search → Select → Create Order → Payment Link → Pay → Confirm → Deliver
-         ↓           ↓              ↓           ↓       ↓         ↓
-       Agent      Firebase       Razorpay    Customer   Agent   Tracking
-```
-
----
-
-## 🎓 How Agents Work Together
-
-When you ask: **"I want running shoes under ₹5000"**
-
-1. **Main Sales Agent** analyzes your request
-2. **🎯 Recommendation Agent** finds suitable products from 1200+ catalog
-3. **📦 Inventory Agent** checks stock across 5 Indian warehouses
-4. **🎁 Loyalty Agent** applies your member discounts
-5. **💳 Payment Agent** generates Razorpay payment link
-6. **🚚 Fulfillment Agent** arranges delivery
-7. **🌟 Support Agent** available for post-purchase help
-
-All of this happens **automatically** in a natural conversation!
-
----
-
-## 📊 Tech Stack
-
-| Technology | Purpose |
-|------------|---------||
-| **Google ADK** | Agent Development Kit |
-| **Google Gemini 2.5** | AI Model |
-| **Firebase Firestore** | Cloud NoSQL Database |
-| **Razorpay** | Payment Gateway |
-| **Python 3.11+** | Runtime |
-| **firebase-admin** | Firebase SDK |
-
----
-
-## 🐛 Troubleshooting
-
-**"GEMINI_API_KEY not found"**
-- Create `.env` file in project root
-- Add: `GEMINI_API_KEY=your_key`
-- Get key from: https://aistudio.google.com/apikey
-
-**"Firebase credentials not found"**
-- Download service account JSON from Firebase Console
-- Save as `firebase-service-account.json` in project root
-- Set path in .env: `FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json`
-
-**"Razorpay error"**
-- Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET
-- Use test keys for development
-- Verify keys from Razorpay dashboard
-
-**"Module not found"**
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a new agent in `agents/worker_agents/`
-3. Add tools in `utils/tools/`
-4. Register in `sales_agent.py`
-5. Submit PR!
-
----
-
-## 📄 License
-
-MIT License - Feel free to use for personal or commercial projects!
-
----
-
-## 🌐 Links
-
-- **GitHub**: https://github.com/Vedag812/Retail-Agent
-- **Google Gemini**: https://ai.google.dev/
-- **Razorpay**: https://razorpay.com/
-- **Firebase**: https://firebase.google.com/
-
----
-
-## 👏 Built With
-
-- ❤️ Google Gemini AI
-- 💳 Razorpay Payment Gateway
-- 🔥 Firebase Firestore
-- 🇮🇳 Indian Product Catalog (1200+ products)
-
----
-
-**Ready to start?** Just run: `python app.py`
+I ran into all of these. The payment agent failing after inventory was reserved was the hardest edge case - you need rollback logic that works across agents.
